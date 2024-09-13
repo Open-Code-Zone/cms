@@ -4,3 +4,4 @@ views/*templ.go
 views/*templ.txt
 node_modules
 cms.db
+public/*

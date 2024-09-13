@@ -7,16 +7,37 @@ templ Page(nav bool) {
 			<title>Git Based CMS</title>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<link rel="stylesheet" href="/public/styles.css"/>
 			<script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+			<link rel="stylesheet" href="/public/styles.css">
 		</head>
 		<body>
-			if nav {
-				<nav class="flex w-full bg-gray-800 text-blue-300 text-xl p-4">
-					<a href="/" class="ml-6">Home</a>
-				</nav>
-			}
-			{ children... }
+			<div class="flex h-screen">
+				<div class="w-64 bg-gray-800 text-white p-4">
+					<div class="flex items-center mb-6">
+						<div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center text-xl font-bold mr-2">A</div>
+						<div>
+							<h1 class="font-semibold">Acme, Inc</h1>
+							<p class="text-xs text-gray-400">Steve Jobs</p>
+						</div>
+					</div>
+					<nav>
+						<ul>
+							<li class="mb-1 text-sm"><a href="#" class="block py-1">Home</a></li>
+							<li class="mb-1 text-sm"><a href="#" class="block py-1">Search</a></li>
+							<li class="mb-1 text-sm"><a href="#" class="block py-1">Starred</a></li>
+							<li class="mb-1 text-sm"><a href="#" class="block py-1">Templates</a></li>
+							<li class="mb-6 text-sm"><a href="#" class="block py-1">Drafts</a></li>
+						</ul>
+						<h2 class="text-xs font-semibold mb-4 text-gray-400">COLLECTIONS</h2>
+						<ul>
+							<li class="mb-1 ml-2 text-sm"><a href="#" class="block py-1">Denmark</a></li>
+							<li class="mb-1 ml-2 text-sm"><a href="#" class="block py-1">India</a></li>
+						</ul>
+					</nav>
+				</div>
+				<!-- Main content -->
+				{ children... }
+			</div>
 		</body>
 	</html>
 }

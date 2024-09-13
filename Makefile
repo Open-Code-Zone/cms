@@ -1,11 +1,12 @@
 build:
-	./tailwindcss -i views/css/styles.css -o public/styles.css
+	@tailwindcss -i views/css/styles.css -o public/styles.css
 	@templ generate view
+	@node build.js    # Add esbuild to bundle the React component
 	@go build -o bin/cms main.go
 
 test:
 	@go test -v ./...
-	
+
 run: build
 	@./bin/cms
 
@@ -23,3 +24,14 @@ migrate-up:
 
 migrate-down:
 	@go run cmd/migrate/main.go down
+
+# New target for esbuild
+build-js:
+	@node build.js  # Run the esbuild script
+
+# Add a watch mode for JavaScript (if you need it for development)
+watch-js:
+	@npm run watch  # Watches and rebuilds JavaScript on changes
+
+dev: tailwind templ watch-js
+	@go run main.go
