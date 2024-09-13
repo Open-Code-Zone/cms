@@ -14,13 +14,13 @@ import {
   UpdatedImage,
   Youtube,
   Mathematics,
-  GlobalDragHandle
+  GlobalDragHandle,
+  Placeholder,
 } from "novel/extensions";
 import { UploadImagesPlugin } from "novel/plugins";
 
 import { cx } from "class-variance-authority";
 import { common, createLowlight } from "lowlight";
-import Placeholder from "@tiptap/extension-placeholder";
 
 //You can overwrite the placeholder with your own configuration
 const placeholderExtension = Placeholder.configure({
