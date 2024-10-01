@@ -162,3 +162,19 @@ pre {
     font-weight: 700;
   }
 }
+
+.spinner {
+  display: none;
+}
+
+.htmx-request .spinner {
+  display: inline;
+}
+
+.htmx-request.spinner {
+  display: inline;
+}
+
+.htmx-request.spinner ~ .button-text {
+  display: none;
+}

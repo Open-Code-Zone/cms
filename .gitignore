@@ -1,7 +1,9 @@
 bin
 .env
 views/*templ.go
+views/*/*templ.go
 views/*templ.txt
+views/*/*templ.txt
 node_modules
 cms.db
 public/*

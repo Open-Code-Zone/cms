@@ -1,0 +1,123 @@
+package components
+
+import (
+	"githum.com/Open-Code-Zone/cms/types"
+	"strings"
+)
+
+templ Editor(id string, blogPost *types.BlogPost) {
+	<div class="flex-1 flex flex-col">
+		<script src="/public/main.js" type="module"></script>
+		<script src="/public/js/bundle.js" type="module"></script>
+		<main class="flex-1 overflow-auto p-8">
+			<form
+        if blogPost != nil {
+          hx-put={ "/blog-post/" + id }
+        } else {
+          hx-post="/blog-post"
+        }
+        hx-target="#alert-toast" class="max-w-md mx-auto">
+				<div class="my-5">
+					<textarea
+						id="autoResizeTextarea"
+						name="title"
+						placeholder="Untitled"
+						class="w-full resize-none text-4xl font-semibold bg-white border-none focus:outline-none py-3"
+					>
+            if blogPost != nil {
+						  { blogPost.Metadata.Title }
+            }
+          </textarea>
+				</div>
+				<div class="flex mb-4">
+					<label class="w-24 text-gray-600">Description</label>
+					<textarea
+						id="autoResizeDescriptionTextarea"
+						name="description"
+						placeholder="Empty"
+						rows="6"
+						class="resize-none overflow-hidden flex-grow bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+					>
+            if blogPost != nil {
+						  { blogPost.Metadata.Description }
+            }
+					</textarea>
+				</div>
+				<div class="flex items-center mb-4">
+					<label class="w-24 text-gray-600">Publish Date</label>
+					<input
+						name="date"
+						type="date"
+            if blogPost != nil {
+						  value={ blogPost.Metadata.Date }
+            }
+						class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+					/>
+				</div>
+				<div class="flex items-center mb-4">
+					<label class="w-24 text-gray-600">Image Link</label>
+					<input
+						name="image"
+						type="text"
+            if blogPost != nil {
+						  value={ blogPost.Metadata.Image }
+            }
+						placeholder="Empty"
+						class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+					/>
+				</div>
+				<div class="flex items-center mb-4">
+					<label class="w-24 text-gray-600">Authors</label>
+					<input
+						type="text"
+						multiple
+						name="authors"
+            if blogPost != nil {
+						  value={ strings.Join(blogPost.Metadata.Authors, ", ") }
+            }
+						placeholder=" Empty"
+						class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+					/>
+				</div>
+				<div class="flex items-center mb-4">
+					<label class="w-24 text-gray-600">Tags</label>
+					<input
+						type="text"
+						multiple
+						name="tags"
+            if blogPost != nil {
+						  value={ strings.Join(blogPost.Metadata.Tags, ", ") }
+            }
+						placeholder=" Empty"
+						class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
+					/>
+				</div>
+				<textarea data-id={ id } hidden class="hidden" id="contentInput" name="content">
+          if blogPost != nil {
+            { blogPost.Content }
+          }
+        </textarea>
+				<button
+					type="submit"
+					id="submit-button"
+					class="flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          hx-indicator="#spinner"
+          hx-target="#alert-toast"
+				>
+          <svg id="spinner" class="spinner animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="button-text">
+            if blogPost != nil {
+              Update
+            } else {
+              Publish
+            }
+          </span>
+				</button>
+			</form>
+			<!-- Markdown Editor similar to Notion using Tiptap.dev-->
+			<div class="w-full max-w-5xl mx-auto mt-4" id="editor"></div>
+		</main>
+	</div>
+}

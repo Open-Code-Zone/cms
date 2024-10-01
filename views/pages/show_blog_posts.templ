@@ -1,0 +1,46 @@
+package pages
+
+import "githum.com/Open-Code-Zone/cms/types"
+import "githum.com/Open-Code-Zone/cms/views/layouts"
+import "fmt"
+
+templ ShowBlogPosts(contents []*types.MarkdownFile) {
+	@layouts.DashboardLayout(true) {
+    <div class="w-full max-w-5xl mx-auto my-6 flex justify-between items-center">
+      <h1 class="text-xl font-semibold leading-6 text-gray-900">All Blog Posts</h1>
+      <a href="/blog-post/new" class="flex cursor-pointer items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">New Post</a>
+    </div>
+		<table class="w-full text-xl border mx-auto max-w-5xl divide-y divide-gray-200 dark:divide-neutral-700">
+			<thead class="bg-gray-50 dark:bg-neutral-700">
+				<tr>
+					<th scope="col" class="px-6 py-3 text-start font-medium text-gray-500 uppercase dark:text-neutral-400">
+						Title
+					</th>
+					<th scope="col" class="px-6 py-3 text-start font-medium text-gray-500 uppercase dark:text-neutral-400">
+						Action
+					</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
+				for index, content := range contents {
+					<tr id={ "blog-" + fmt.Sprint(index) }>
+						<td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 dark:text-neutral-200">
+							{ content.FileName }
+						</td>
+						<td class="flex justify-between px-6 py-4 whitespace-nowrap text-gray-800 dark:text-neutral-200">
+							<a
+								class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
+								href={ templ.SafeURL("/blog-post/edit/" + content.FileName) }
+							>Edit</a>
+							<button
+								class="text-red-600"
+								hx-delete={ "/blog-post/" + content.FileName }
+                hx-target={ "#blog-" + fmt.Sprint(index)}
+							>Delete</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}

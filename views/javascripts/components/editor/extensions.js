@@ -155,6 +155,10 @@ const mathematics = Mathematics.configure({
   },
 });
 
+const markdown = MarkdownExtension.configure({
+  html: true,
+});
+
 const characterCount = CharacterCount.configure();
 
 export const defaultExtensions = [
@@ -172,7 +176,7 @@ export const defaultExtensions = [
   mathematics,
   characterCount,
   TiptapUnderline,
-  MarkdownExtension,
+  markdown,
   HighlightExtension,
   globalDragHandle
 ];

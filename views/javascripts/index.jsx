@@ -8,7 +8,6 @@ const root = createRoot(editorContainer);
 
 const NovelEditor = () => {
   const [value, setValue] = useState({});
-  console.log(value);
   return (
     <Editor initialValue={value} onChange={setValue} />
   );

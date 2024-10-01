@@ -24,10 +24,10 @@ import { Separator } from "../ui/separator";
 const extensions = [...defaultExtensions, slashCommand];
 //const hljs = require('highlight.js');
 
-const Editor = ({ initialValue }) => {
+const Editor = () => {
   const [openNode, setOpenNode] = useState(false);
   const [openLink, setOpenLink] = useState(false);
-  const [saveStatus, setSaveStatus] = useState("Saved");
+  const [saveStatus, setSaveStatus] = useState("Draft Saved");
   const [charsCount, setCharsCount] = useState();
 
   //const highlightCodeblocks = (content) => {
@@ -42,21 +42,24 @@ const Editor = ({ initialValue }) => {
 
   const debouncedUpdates = useDebouncedCallback(async (editor) => {
     setCharsCount(editor.storage.characterCount.words());
-    window.localStorage.setItem("markdown", editor.storage.markdown.getMarkdown());
-    setSaveStatus("Saved");
+    const id = document.getElementById("contentInput").getAttribute("data-id");
+    window.localStorage.setItem(id, editor.storage.markdown.getMarkdown());
+    document.getElementById("contentInput").value = editor.storage.markdown.getMarkdown();
+    setSaveStatus("Draft Saved");
   }, 500);
 
   const setEditorMarkdownContent = (async (editor) => {
-    const markdown = window.localStorage.getItem("markdown");
+    const id = document.getElementById("contentInput").getAttribute("data-id");
+    const markdown = window.localStorage.getItem(id);
     if (markdown) {
       editor.commands.setContent(markdown)
     } else {
-      editor.commands.setContent(initialValue)
+      editor.commands.setContent(document.getElementById("contentInput").value)
     }
   })
 
   return (
-    <div className="relative w-full max-w-screen-lg">
+    <div className="relative w-full">
       <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2">
         <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">{saveStatus}</div>
         <div className={charsCount ? "rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground" : "hidden"}>
@@ -66,7 +69,7 @@ const Editor = ({ initialValue }) => {
 
       <EditorRoot>
         <EditorContent
-          className="relative min-h-[500px] p-10 w-full max-w-screen-lg border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border"
+          className="relative min-h-[500px] p-10 w-full border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border"
           extensions={extensions}
           editorProps={{
             handleDOMEvents: {
@@ -84,7 +87,6 @@ const Editor = ({ initialValue }) => {
             setSaveStatus("Unsaved");
           }}
           onCreate={(editor) => {
-            console.log(editor);
             setEditorMarkdownContent(editor.editor);
           }}
           slotAfter={<ImageResizer />}
@@ -117,7 +119,7 @@ const Editor = ({ initialValue }) => {
             tippyOptions={{
               placement: "top",
             }}
-            className="flex bg-white w-fit max-w-[90vw] overflow-hidden rounded-md border border-muted shadow-xl"
+            className="flex bg-white w-fit max-w-[90vw] overflow-hidden rounded-md border shadow-xl"
           >
             <Separator orientation="vertical" />
             <NodeSelector open={openNode} onOpenChange={setOpenNode} />

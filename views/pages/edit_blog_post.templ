@@ -1,0 +1,13 @@
+package pages
+
+import (
+	"githum.com/Open-Code-Zone/cms/types"
+	"githum.com/Open-Code-Zone/cms/views/layouts"
+	"githum.com/Open-Code-Zone/cms/views/components"
+)
+
+templ EditBlogPosts(id string, blogPost *types.BlogPost) {
+	@layouts.DashboardLayout(true) {
+    @components.Editor(id, blogPost)
+	}
+}

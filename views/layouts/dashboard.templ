@@ -1,0 +1,45 @@
+package layouts
+
+templ DashboardLayout(nav bool) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>Git Based CMS</title>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+			<link rel="stylesheet" href="/public/styles.css"/>
+			<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/shoelace-autoloader.js"></script>
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/themes/light.css"/>
+			<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/components/alert/alert.js"></script>
+			<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.17.1/cdn/components/icon/icon.js"></script>
+		</head>
+		<body>
+			<div class="flex h-screen">
+				<div class="w-64 bg-gray-800 text-white p-4">
+					<div class="flex items-center mb-6">
+						<div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center text-xl font-bold mr-2">A</div>
+						<div>
+							<h1 class="font-semibold">Acme, Inc</h1>
+							<p class="text-xs text-gray-400">Steve Jobs</p>
+						</div>
+					</div>
+					<nav>
+						<ul>
+							<li class="mb-1 text-sm">
+								<a href="/blog-post" class="block py-1">
+									All Posts
+								</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+				<!-- Main content -->
+				<main class="flex-1 overflow-y-auto p-4">
+					<div id="alert-toast"></div>
+					{ children... }
+				</main>
+			</div>
+		</body>
+	</html>
+}

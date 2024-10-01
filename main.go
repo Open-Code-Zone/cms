@@ -25,8 +25,13 @@ func main() {
 	router := mux.NewRouter()
 	handler := handlers.New(store)
 
-	router.HandleFunc("/", handler.HandleHome).Methods("GET")
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+	router.HandleFunc("/blog-post/edit/{id}", handler.HandleBlogPostEditPage).Methods("GET")
+	router.HandleFunc("/blog-post/{id}", handler.HandleDeleteBlogPost).Methods("DELETE")
+	router.HandleFunc("/blog-post/{id}", handler.HandleUpdateBlogPost).Methods("PUT")
+	router.HandleFunc("/blog-post", handler.HandleShowAllBlogPostsPage).Methods("GET")
+	router.HandleFunc("/blog-post/new", handler.HandleNewBlogPostPage).Methods("GET")
+	router.HandleFunc("/blog-post", handler.HandleNewBlogPost).Methods("POST")
 
 	fmt.Printf("Listening on %v\n", "localhost:7000")
 	http.ListenAndServe(":7000", router)
