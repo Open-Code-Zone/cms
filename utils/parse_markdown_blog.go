@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode"
 
-	"githum.com/Open-Code-Zone/cms/types"
+	"github.com/Open-Code-Zone/cms/types"
 )
 
 func sanitizeFilename(title string) string {

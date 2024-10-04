@@ -1,0 +1,12 @@
+3. Adding Auth of Azure AD
+4. Adding user and permissiong thingy with very minimal setup for now
+  - admin user who distribute the permission access to writers
+  - author user who writes the content
+
+5. converting react tiptap markdown editor to svelte component for efficient bundle size of javascript
+
+6. HTML form input to nice looking components with ui interaction
+  - pillinput/chip input for tags
+  - select tags for authors
+  - image upload with preview
+

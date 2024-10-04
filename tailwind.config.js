@@ -3,7 +3,6 @@ const config = {
   darkMode: ["class"],
   content: [
     "./views/**/*.{templ,jsx,js}", // Includes templ, jsx, and js files under views directory and subdirectories
-    "./**/*.templ", // For any .templ files in the entire project
   ],
   prefix: "",
   theme: {
@@ -15,9 +14,6 @@ const config = {
       },
     },
     extend: {
-      fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -1,0 +1,17 @@
+package layouts
+
+templ LandingLayout() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<title>Git Based CMS</title>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+			<link rel="stylesheet" href="/public/styles.css"/>
+		</head>
+		<body class="h-full bg-gray-100">
+			{ children... }
+		</body>
+	</html>
+}

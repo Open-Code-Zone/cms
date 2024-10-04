@@ -3,9 +3,9 @@ package utils
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/google/go-github/v53/github"
+	"github.com/Open-Code-Zone/cms/config"
 	"golang.org/x/oauth2"
 )
 
@@ -20,10 +20,7 @@ type GitHubClient struct {
 }
 
 func NewGitHubClient() (*GitHubClient, error) {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return nil, fmt.Errorf("GITHUB_TOKEN environment variable not set")
-	}
+	token := config.Envs.GitHubToken
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})

@@ -10,10 +10,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"githum.com/Open-Code-Zone/cms/types"
-	"githum.com/Open-Code-Zone/cms/utils"
-	"githum.com/Open-Code-Zone/cms/views/components"
-	"githum.com/Open-Code-Zone/cms/views/pages"
+	"github.com/Open-Code-Zone/cms/types"
+	"github.com/Open-Code-Zone/cms/utils"
+	"github.com/Open-Code-Zone/cms/views/components"
+	"github.com/Open-Code-Zone/cms/views/pages"
 )
 
 const (
@@ -53,7 +53,6 @@ func (h *Handler) HandleAddBlogPost(w http.ResponseWriter, r *http.Request) {
 		},
 		Content: r.FormValue("content"),
 	}
-	fmt.Println(blogPost.Content)
 
 	gc, err := utils.NewGitHubClient()
 	if err != nil {
