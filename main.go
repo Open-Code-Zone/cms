@@ -25,37 +25,36 @@ func main() {
 	store := store.NewStore(db)
 	initStorage(db)
 
-	// session store and auth service
-  sessionStore := auth.NewCoockieOptions(auth.SessionOptions{
-    CookiesKey: config.Envs.CookiesAuthSecret,
-    MaxAge: config.Envs.CookiesAuthAgeInSeconds,
-    Secure: config.Envs.CookiesAuthIsSecure,
-    HttpOnly: config.Envs.CookiesAuthIsHttpOnly,
-  })
+	// TODO: currently FileSystemStore is used since CookieStore doesn't able to store cookie of larger size
+	sessionStore := auth.NewFileSystemStore(auth.SessionOptions{
+		CookiesKey: config.Envs.CookiesAuthSecret,
+		MaxAge:     config.Envs.CookiesAuthAgeInSeconds,
+		Secure:     config.Envs.CookiesAuthIsSecure,
+		HttpOnly:   config.Envs.CookiesAuthIsHttpOnly,
+	})
 
-  authService := auth.NewAuthService(sessionStore)
-
+	auth.NewAuthService(sessionStore)
 
 	router := mux.NewRouter()
 
-	handler := handlers.New(store, authService)
+	handler := handlers.New(store)
 
 	// static assets
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	// blog posts
-	router.HandleFunc("/blog-post", auth.RequireAuth(handler.HandleShowAllBlogPostsPage, authService)).Methods("GET")
-	router.HandleFunc("/blog-post/new", handler.HandleNewBlogPostPage).Methods("GET")
-	router.HandleFunc("/blog-post", handler.HandleNewBlogPost).Methods("POST")
-	router.HandleFunc("/blog-post/edit/{id}", handler.HandleBlogPostEditPage).Methods("GET")
-	router.HandleFunc("/blog-post/{id}", handler.HandleDeleteBlogPost).Methods("DELETE")
-	router.HandleFunc("/blog-post/{id}", handler.HandleUpdateBlogPost).Methods("PUT")
+	router.HandleFunc("/blog-post", auth.RequireAuth(handler.HandleShowAllBlogPostsPage)).Methods("GET")
+	router.HandleFunc("/blog-post/new", auth.RequireAuth(handler.HandleNewBlogPostPage)).Methods("GET")
+	router.HandleFunc("/blog-post", auth.RequireAuth(handler.HandleNewBlogPost)).Methods("POST")
+	router.HandleFunc("/blog-post/edit/{id}", auth.RequireAuth(handler.HandleBlogPostEditPage)).Methods("GET")
+	router.HandleFunc("/blog-post/{id}", auth.RequireAuth(handler.HandleDeleteBlogPost)).Methods("DELETE")
+	router.HandleFunc("/blog-post/{id}", auth.RequireAuth(handler.HandleUpdateBlogPost)).Methods("PUT")
 
 	// auth
+	router.HandleFunc("/login", handler.HandleLoginPage).Methods("GET")
 	router.HandleFunc("/auth/{provider}", handler.HandleProviderLogin).Methods("GET")
 	router.HandleFunc("/auth/{provider}/callback", handler.HandleAuthCallbackFunction).Methods("GET")
-	router.HandleFunc("/auth/logout/{provider}", nil).Methods("GET")
-	router.HandleFunc("/login", handler.HandleLogin).Methods("GET")
+	router.HandleFunc("/auth/logout/{provider}", handler.HandleLogout).Methods("GET")
 
 	log.Printf("Server: Listening on %s:%s\n", config.Envs.PublicHost, config.Envs.Port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%s", config.Envs.Port), router))

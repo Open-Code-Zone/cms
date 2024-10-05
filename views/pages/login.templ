@@ -16,16 +16,10 @@ templ LoginPage() {
 			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
 				<div class="flex flex-col gap-4 bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
 					<a
-						href="/auth/azuread"
+						href="/auth/azureadv2"
 						class="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							data-name="Layer 1"
-							width="20"
-							height="20"
-							viewBox="0 0 18 18"
-						>
+						<svg xmlns="http://www.w3.org/2000/svg" data-name="Layer 1" width="20" height="20" viewBox="0 0 18 18">
 							<path
 								d="m3.802,14.032c.388.242,1.033.511,1.715.511.621,0,1.198-.18,1.676-.487,0,0,.001,0,.002-.001l1.805-1.128v4.073c-.286,0-.574-.078-.824-.234l-4.374-2.734Z"
 								fill="#225086"
@@ -53,9 +47,7 @@ templ LoginPage() {
 						</svg>
 						<span class="text-sm font-semibold leading-6">Microsoft Entra</span>
 					</a>
-					<button
-						disabled
-						href="/auth/google"
+					<a
 						class="cursor-not-allowed flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
 					>
 						<svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,10 +69,8 @@ templ LoginPage() {
 							></path>
 						</svg>
 						<span class="text-sm font-semibold leading-6">Google</span>
-					</button>
-					<button
-						disabled
-						href="/auth/github"
+					</a>
+					<a
 						class="cursor-not-allowed flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
 					>
 						<svg class="h-5 w-5 fill-[#24292F]" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -91,7 +81,7 @@ templ LoginPage() {
 							></path>
 						</svg>
 						<span class="text-sm font-semibold leading-6">GitHub</span>
-					</button>
+					</a>
 				</div>
 			</div>
 		</div>

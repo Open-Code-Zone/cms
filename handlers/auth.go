@@ -1,36 +1,64 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/Open-Code-Zone/cms/services/auth"
 	"github.com/Open-Code-Zone/cms/views/pages"
 	"github.com/markbates/goth/gothic"
 )
 
-func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
-	pages.LoginPage().Render(r.Context(), w)
+func (h *Handler) HandleLoginPage(w http.ResponseWriter, r *http.Request) {
+	_, err := auth.GetSessionUser(r)
+	if err != nil {
+		log.Println(err)
+		pages.LoginPage().Render(r.Context(), w)
+	}
+
+	w.Header().Set("Location", "/blog-post")
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (h *Handler) HandleProviderLogin(w http.ResponseWriter, r *http.Request) {
-	u, err := gothic.CompleteUserAuth(w, r)
-	if err != nil {
-		gothic.BeginAuthHandler(w, r)
+	if u, err := gothic.CompleteUserAuth(w, r); err == nil {
+		log.Printf("User already authenticated! %v", u)
+
+		pages.LoginPage().Render(r.Context(), w)
 	} else {
-    log.Println(u)
-		http.Redirect(w, r, "/blog-post", http.StatusSeeOther)
+		gothic.BeginAuthHandler(w, r)
 	}
 }
 
 func (h *Handler) HandleAuthCallbackFunction(w http.ResponseWriter, r *http.Request) {
-	u, err := gothic.CompleteUserAuth(w, r)
+	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-    log.Println(err)
-    return
+		fmt.Fprintln(w, err)
+		return
 	}
 
-  err = h.auth.StoreUserSession(w, r, u)
+	err = auth.StoreUserSession(w, r, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-  w.Header().Set("Location", "/blog-post")
-  w.WriteHeader(http.StatusTemporaryRedirect)
+	w.Header().Set("Location", "/blog-post")
+	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	log.Println("Logging out...")
+
+	err := gothic.Logout(w, r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	auth.RemoveUserSession(w, r)
+
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }

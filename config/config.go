@@ -16,6 +16,7 @@ type Config struct {
 	CookiesAuthIsHttpOnly   bool
 	AzureADClientID         string
 	AzureADClientSecret     string
+	AzureADTenantID           string
 	GitHubToken             string
 }
 
@@ -46,6 +47,7 @@ func initConfig() Config {
 		CookiesAuthIsHttpOnly:   getEnvAsBool("COOKIES_AUTH_IS_HTTP_ONLY", false),
 		AzureADClientID:         getEnvOrError("AZURE_AD_CLIENT_ID"),
 		AzureADClientSecret:     getEnvOrError("AZURE_AD_CLIENT_SECRET"),
+		AzureADTenantID:           getEnvOrError("AZURE_AD_TENANT_ID"),
 		GitHubToken:             getEnvOrError("GITHUB_TOKEN"),
 	}
 }

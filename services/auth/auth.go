@@ -9,33 +9,28 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	"github.com/markbates/goth/providers/azuread"
+	"github.com/markbates/goth/providers/azureadv2"
 )
 
-type AuthService struct{}
-
-func NewAuthService(store sessions.Store) *AuthService {
+func NewAuthService(store sessions.Store) {
 	gothic.Store = store
 
 	goth.UseProviders(
-		azuread.New(
+		azureadv2.New(
 			config.Envs.AzureADClientID,
 			config.Envs.AzureADClientSecret,
-			buildCallbackURL("azuread"),
-			[]string{
-				//"openid",
-				//"profile",
-				//"email",
-				"user.read",
+			buildCallbackURL("azureadv2"),
+			azureadv2.ProviderOptions{
+				Tenant: azureadv2.TenantType(config.Envs.AzureADTenantID),
+				Scopes: []azureadv2.ScopeType{
+					"User.Read",
+				},
 			},
-			//"https://graph.microsoft.com/v1.0",
 		),
 	)
-
-	return &AuthService{}
 }
 
-func (s *AuthService) GetSessionUser(r *http.Request) (goth.User, error) {
+func GetSessionUser(r *http.Request) (goth.User, error) {
 	session, err := gothic.Store.Get(r, SessionName)
 	if err != nil {
 		return goth.User{}, err
@@ -49,7 +44,7 @@ func (s *AuthService) GetSessionUser(r *http.Request) (goth.User, error) {
 	return u.(goth.User), nil
 }
 
-func (s *AuthService) StoreUserSession(w http.ResponseWriter, r *http.Request, u goth.User) error {
+func StoreUserSession(w http.ResponseWriter, r *http.Request, u goth.User) error {
 	session, _ := gothic.Store.Get(r, SessionName)
 
 	session.Values["user"] = u
@@ -62,7 +57,7 @@ func (s *AuthService) StoreUserSession(w http.ResponseWriter, r *http.Request, u
 	return nil
 }
 
-func (s *AuthService) RemoveUserSession(w http.ResponseWriter, r *http.Request) {
+func RemoveUserSession(w http.ResponseWriter, r *http.Request) {
 	session, err := gothic.Store.Get(r, SessionName)
 	if err != nil {
 		log.Println(err)
@@ -76,9 +71,9 @@ func (s *AuthService) RemoveUserSession(w http.ResponseWriter, r *http.Request) 
 	session.Save(r, w)
 }
 
-func RequireAuth(handlerFunc http.HandlerFunc, auth *AuthService) http.HandlerFunc {
+func RequireAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := auth.GetSessionUser(r)
+		session, err := GetSessionUser(r)
 		if err != nil {
 			log.Println(err)
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
