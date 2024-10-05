@@ -3,7 +3,7 @@ package auth
 import "github.com/gorilla/sessions"
 
 const (
-	SessionName = "cms-session"
+	SessionName = "session"
 )
 
 type SessionOptions struct {
@@ -13,8 +13,21 @@ type SessionOptions struct {
 	Secure     bool // Should be true in production
 }
 
-func NewCoockieOptions(opts SessionOptions) *sessions.CookieStore {
+// cockie store is not used since it doesn't able to store cookie of larger size
+func NewCookieStore(opts SessionOptions) *sessions.CookieStore {
 	store := sessions.NewCookieStore([]byte(opts.CookiesKey))
+
+	store.MaxAge(opts.MaxAge)
+	store.Options.Path = "/"
+	store.Options.HttpOnly = opts.HttpOnly
+	store.Options.Secure = opts.Secure
+
+	return store
+}
+
+func NewFileSystemStore(opts SessionOptions) *sessions.FilesystemStore {
+	store := sessions.NewFilesystemStore("", []byte(opts.CookiesKey))
+  store.MaxLength(8192)
 
 	store.MaxAge(opts.MaxAge)
 	store.Options.Path = "/"
