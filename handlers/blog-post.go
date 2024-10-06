@@ -41,115 +41,6 @@ func sanitizeFilename(title string) string {
 	}, title)
 }
 
-func (h *Handler) HandleAddBlogPost(w http.ResponseWriter, r *http.Request) {
-	blogPost := &types.BlogPost{
-		Metadata: types.BlogMetadata{
-			Title:       r.FormValue("title"),
-			Description: r.FormValue("description"),
-			Date:        r.FormValue("date"),
-			Authors:     []string{r.FormValue("authors")},
-			Image:       r.FormValue("image"),
-			Tags:        []string{r.FormValue("tags")},
-		},
-		Content: r.FormValue("content"),
-	}
-
-	gc, err := utils.NewGitHubClient()
-	if err != nil {
-		log.Println("Error creating GitHub client:", err)
-		http.Error(w, "Failed to create GitHub client", http.StatusInternalServerError)
-	}
-
-	fileName := sanitizeFilename(blogPost.Metadata.Title) + ".md"
-	filePath := filepath.Join(contentPath, fileName)
-
-	fileContent, err := utils.GenerateMarkdown(blogPost.Metadata, blogPost.Content)
-	if err != nil {
-		log.Println("Error generating markdown:", err)
-		http.Error(w, "Failed to generate markdown", http.StatusInternalServerError)
-		return
-	}
-
-	message := fmt.Sprintf("Add new blog post: %s", blogPost.Metadata.Title)
-
-	err = gc.CreateFile(filePath, fileContent, message)
-	if err != nil {
-		log.Println("Error creating file:", err)
-		http.Error(w, "Failed to create file", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Blog post created successfully"))
-}
-
-func (h *Handler) HandleUpdateBlogPost(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	fileName := vars["id"]
-
-	blogPost := &types.BlogPost{
-		Metadata: types.BlogMetadata{
-			Title:       r.FormValue("title"),
-			Description: r.FormValue("description"),
-			Date:        r.FormValue("date"),
-			Authors:     []string{r.FormValue("authors")},
-			Image:       r.FormValue("image"),
-			Tags:        []string{r.FormValue("tags")},
-		},
-		Content: r.FormValue("content"),
-	}
-
-	gc, err := utils.NewGitHubClient()
-	if err != nil {
-		log.Println("Error creating GitHub client:", err)
-		http.Error(w, "Failed to create GitHub client", http.StatusInternalServerError)
-	}
-
-	fileContent, err := utils.GenerateMarkdown(blogPost.Metadata, blogPost.Content)
-	if err != nil {
-		log.Println("Error generating markdown:", err)
-		http.Error(w, "Failed to generate markdown", http.StatusInternalServerError)
-		return
-	}
-
-	message := fmt.Sprintf("updated the blog post: %s", blogPost.Metadata.Title)
-	filePath := filepath.Join(contentPath, fileName)
-
-	err = gc.UpdateFile(filePath, fileContent, message)
-	if err != nil {
-		log.Println("Error updating file:", err)
-		http.Error(w, "Failed to update file", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	components.Toaster("Blog Post updated succesfully", "success").Render(r.Context(), w)
-}
-
-func (h *Handler) HandleDeleteBlogPost(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	fileName := vars["id"]
-
-	gc, err := utils.NewGitHubClient()
-	if err != nil {
-		log.Println("Error creating GitHub client:", err)
-		http.Error(w, "Failed to create GitHub client", http.StatusInternalServerError)
-	}
-
-	message := fmt.Sprintf("deleted the blog post: %s", fileName)
-	filePath := filepath.Join(contentPath, fileName)
-
-	err = gc.DeleteFile(filePath, message)
-	if err != nil {
-		log.Println("Error deleting file:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		components.Toaster("Couldn't able to delete through GitHub API", "danger")
-		return
-	}
-
-	components.Toaster("Blog Post deleted succesfully", "success").Render(r.Context(), w)
-}
-
 func (h *Handler) HandleBlogPostEditPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -238,7 +129,7 @@ func (h *Handler) HandleNewBlogPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := fmt.Sprintf("updated the blog post: %s", blogPost.Metadata.Title)
+	message := fmt.Sprintf("🤖 - Added the new blog post: %s", blogPost.Metadata.Title)
 
 	fileName := sanitizeFilename(blogPost.Metadata.Title) + ".md"
 	filePath := filepath.Join(contentPath, fileName)
@@ -253,4 +144,71 @@ func (h *Handler) HandleNewBlogPost(w http.ResponseWriter, r *http.Request) {
 	components.Toaster("Blog Post created and published succesfully", "success").Render(r.Context(), w)
 	// redirect to show all blog posts page
 	//http.Redirect(w, r, "/blog-post", http.StatusSeeOther)
+}
+
+func (h *Handler) HandleDeleteBlogPost(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	fileName := vars["id"]
+
+	gc, err := utils.NewGitHubClient()
+	if err != nil {
+		log.Println("Error creating GitHub client:", err)
+		http.Error(w, "Failed to create GitHub client", http.StatusInternalServerError)
+	}
+
+	message := fmt.Sprintf("🤖 - Deleted the blog post: %s", fileName)
+	filePath := filepath.Join(contentPath, fileName)
+
+	err = gc.DeleteFile(filePath, message)
+	if err != nil {
+		log.Println("Error deleting file:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		components.Toaster("Couldn't able to delete through GitHub API", "danger")
+		return
+	}
+
+	components.Toaster("Blog Post deleted succesfully", "success").Render(r.Context(), w)
+}
+
+func (h *Handler) HandleUpdateBlogPost(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	fileName := vars["id"]
+
+	blogPost := &types.BlogPost{
+		Metadata: types.BlogMetadata{
+			Title:       r.FormValue("title"),
+			Description: r.FormValue("description"),
+			Date:        r.FormValue("date"),
+			Authors:     []string{r.FormValue("authors")},
+			Image:       r.FormValue("image"),
+			Tags:        []string{r.FormValue("tags")},
+		},
+		Content: r.FormValue("content"),
+	}
+
+	gc, err := utils.NewGitHubClient()
+	if err != nil {
+		log.Println("Error creating GitHub client:", err)
+		http.Error(w, "Failed to create GitHub client", http.StatusInternalServerError)
+	}
+
+	fileContent, err := utils.GenerateMarkdown(blogPost.Metadata, blogPost.Content)
+	if err != nil {
+		log.Println("Error generating markdown:", err)
+		http.Error(w, "Failed to generate markdown", http.StatusInternalServerError)
+		return
+	}
+
+	message := fmt.Sprintf("🤖 - Updated the blog post: %s", blogPost.Metadata.Title)
+	filePath := filepath.Join(contentPath, fileName)
+
+	err = gc.UpdateFile(filePath, fileContent, message)
+	if err != nil {
+		log.Println("Error updating file:", err)
+		http.Error(w, "Failed to update file", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	components.Toaster("Blog Post updated succesfully", "success").Render(r.Context(), w)
 }
