@@ -39,7 +39,7 @@ const Editor = () => {
   //  });
   //  return new XMLSerializer().serializeToString(doc);
   //};
-
+  //
   const debouncedUpdates = useDebouncedCallback(async (editor) => {
     setCharsCount(editor.storage.characterCount.words());
     const id = document.getElementById("contentInput").getAttribute("data-id");
@@ -57,6 +57,15 @@ const Editor = () => {
       editor.commands.setContent(document.getElementById("contentInput").value)
     }
   })
+
+  // on initial render of this editor, we should set contentInput value as draft content
+  useEffect(() => {
+    const id = document.getElementById("contentInput").getAttribute("data-id");
+    const value = window.localStorage.getItem(id);
+    if (value) {
+      document.getElementById("contentInput").value = value
+    }
+  }, []);
 
   return (
     <div className="relative w-full">
