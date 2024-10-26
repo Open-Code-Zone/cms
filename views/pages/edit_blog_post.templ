@@ -1,13 +1,12 @@
 package pages
 
 import (
-	"github.com/Open-Code-Zone/cms/types"
 	"github.com/Open-Code-Zone/cms/views/components"
 	"github.com/Open-Code-Zone/cms/views/layouts"
 )
 
-templ EditBlogPosts(id string, blogPost *types.BlogPost) {
+templ EditBlogPosts(id string, blogConfig *string, blogPost *string) {
 	@layouts.DashboardLayout(true) {
-		@components.Editor(id, blogPost)
+		@components.Editor(id, blogConfig, blogPost)
 	}
 }

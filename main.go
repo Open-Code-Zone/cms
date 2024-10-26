@@ -8,8 +8,10 @@ import (
 
 	"github.com/Open-Code-Zone/cms/config"
 	"github.com/Open-Code-Zone/cms/handlers"
+	"github.com/Open-Code-Zone/cms/internal/database"
 	"github.com/Open-Code-Zone/cms/services/auth"
 	"github.com/Open-Code-Zone/cms/store"
+	"github.com/Open-Code-Zone/cms/utils"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -21,9 +23,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	queries := database.New(db)
 	// db store
-	store := store.NewStore(db)
-	initStorage(db)
+	store := store.NewStore(queries)
+	pingStorage(db)
 
 	// TODO: currently FileSystemStore is used since CookieStore doesn't able to store cookie of larger size
 	sessionStore := auth.NewFileSystemStore(auth.SessionOptions{
@@ -33,11 +36,16 @@ func main() {
 		HttpOnly:   config.Envs.CookiesAuthIsHttpOnly,
 	})
 
-	auth.NewAuthService(sessionStore)
+	// GitHub Client
+	githubClient, err := utils.NewGitHubClient()
+	if err != nil {
+		log.Printf("Error creating GitHub client: %v", err)
+	}
 
+	auth.NewAuthService(sessionStore)
 	router := mux.NewRouter()
 
-	handler := handlers.New(store)
+	handler := handlers.New(store, githubClient)
 
 	// static assets
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
@@ -60,7 +68,7 @@ func main() {
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%s", config.Envs.Port), router))
 }
 
-func initStorage(db *sql.DB) {
+func pingStorage(db *sql.DB) {
 	err := db.Ping()
 	if err != nil {
 		log.Fatal(err)

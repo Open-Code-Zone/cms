@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   EditorRoot,
   EditorCommand,
@@ -24,48 +24,22 @@ import { Separator } from "../ui/separator";
 const extensions = [...defaultExtensions, slashCommand];
 //const hljs = require('highlight.js');
 
-const Editor = () => {
+const Editor = ({ markdownContent, setMarkdownContent }) => {
   const [openNode, setOpenNode] = useState(false);
   const [openLink, setOpenLink] = useState(false);
-  const [saveStatus, setSaveStatus] = useState("Draft Saved");
+  const [saveStatus, setSaveStatus] = useState("Loaded from localstorage");
   const [charsCount, setCharsCount] = useState();
 
-  //const highlightCodeblocks = (content) => {
-  //  const doc = new DOMParser().parseFromString(content, 'text/html');
-  //  doc.querySelectorAll('pre code').forEach((el) => {
-  //    // @ts-ignore
-  //    // https://highlightjs.readthedocs.io/en/latest/api.html?highlight=highlightElement#highlightelement
-  //    hljs.highlightElement(el);
-  //  });
-  //  return new XMLSerializer().serializeToString(doc);
-  //};
-  //
   const debouncedUpdates = useDebouncedCallback(async (editor) => {
+    setMarkdownContent(editor.storage.markdown.getMarkdown())
     setCharsCount(editor.storage.characterCount.words());
-    const id = document.getElementById("contentInput").getAttribute("data-id");
-    window.localStorage.setItem(id, editor.storage.markdown.getMarkdown());
     document.getElementById("contentInput").value = editor.storage.markdown.getMarkdown();
     setSaveStatus("Draft Saved");
   }, 500);
 
   const setEditorMarkdownContent = (async (editor) => {
-    const id = document.getElementById("contentInput").getAttribute("data-id");
-    const markdown = window.localStorage.getItem(id);
-    if (markdown) {
-      editor.commands.setContent(markdown)
-    } else {
-      editor.commands.setContent(document.getElementById("contentInput").value)
-    }
+    editor.commands.setContent(markdownContent)
   })
-
-  // on initial render of this editor, we should set contentInput value as draft content
-  useEffect(() => {
-    const id = document.getElementById("contentInput").getAttribute("data-id");
-    const value = window.localStorage.getItem(id);
-    if (value) {
-      document.getElementById("contentInput").value = value
-    }
-  }, []);
 
   return (
     <div className="relative w-full">
@@ -78,7 +52,7 @@ const Editor = () => {
 
       <EditorRoot>
         <EditorContent
-          className="relative min-h-[500px] p-10 w-full border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border"
+          className="relative min-h-[500px] pt-16 p-10 w-full border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border"
           extensions={extensions}
           editorProps={{
             handleDOMEvents: {

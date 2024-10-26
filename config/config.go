@@ -2,9 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -16,8 +18,9 @@ type Config struct {
 	CookiesAuthIsHttpOnly   bool
 	AzureADClientID         string
 	AzureADClientSecret     string
-	AzureADTenantID           string
+	AzureADTenantID         string
 	GitHubToken             string
+	BlogPostConfig          string
 }
 
 const (
@@ -25,6 +28,7 @@ const (
 )
 
 var Envs Config
+var blogConfig string
 
 func init() {
 	// Load the .env file
@@ -38,6 +42,12 @@ func init() {
 }
 
 func initConfig() Config {
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+    log.Fatalf("Error reading config.yaml: %v", err)
+	}
+	blogConfig = string(data)
+
 	return Config{
 		PublicHost:              getEnv("PUBLIC_HOST", "http://localhost"),
 		Port:                    getEnv("PORT", "7000"),
@@ -47,8 +57,9 @@ func initConfig() Config {
 		CookiesAuthIsHttpOnly:   getEnvAsBool("COOKIES_AUTH_IS_HTTP_ONLY", false),
 		AzureADClientID:         getEnvOrError("AZURE_AD_CLIENT_ID"),
 		AzureADClientSecret:     getEnvOrError("AZURE_AD_CLIENT_SECRET"),
-		AzureADTenantID:           getEnvOrError("AZURE_AD_TENANT_ID"),
+		AzureADTenantID:         getEnvOrError("AZURE_AD_TENANT_ID"),
 		GitHubToken:             getEnvOrError("GITHUB_TOKEN"),
+		BlogPostConfig:          blogConfig,
 	}
 }
 
@@ -89,7 +100,6 @@ func getEnvAsBool(key string, fallback bool) bool {
 		if err != nil {
 			return fallback
 		}
-
 		return b
 	}
 

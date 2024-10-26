@@ -1,0 +1,59 @@
+- collection: posts
+  git_path: content/posts
+  file_name_format: "{title}"
+  metadata_schema:
+    - name: title
+      type: string
+      description: "The title of the blog post"
+      required: true
+    - name: description
+      type: string
+      description: "A short description of the post"
+      required: true
+    - name: date
+      type: datetime
+      description: "The date and time the post was published"
+      required: true
+    - name: authors
+      type: array
+      items_type: string
+      description: "List of authors for the post"
+      required: true
+    - name: image
+      type: file
+      description: "URL of the main image for the post"
+      required: false
+    - name: tags
+      type: array
+      items_type: string
+      description: "Tags related to the post"
+      required: false
+
+- collection: authors
+  git_path: content/authors
+  file_name_format: "{name}"
+  metadata_schema:
+    - name: name
+      type: string
+      description: "The name of the author"
+      required: true
+    - name: image
+      type: file
+      description: "URL of the author's image"
+      required: false
+    - name: location
+      type: string
+      description: "The location of the author"
+      required: false
+    - name: website
+      type: string
+      description: "URL of the author's website"
+      required: false
+    - name: twitter
+      type: string
+      description: "Twitter handle of the author"
+      required: false
+    - name: instagram
+      type: string
+      description: "Instagram handle of the author"
+      required: false
