@@ -25,7 +25,7 @@ func main() {
 
 	queries := database.New(db)
 	// db store
-	store := store.NewStore(queries)
+	store := store.NewStore(queries, config.Envs.CollectionConfig)
 	pingStorage(db)
 
 	// TODO: currently FileSystemStore is used since CookieStore doesn't able to store cookie of larger size
@@ -50,19 +50,19 @@ func main() {
 	// static assets
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
-	// blog posts
-	router.HandleFunc("/blog-post", auth.RequireAuth(handler.HandleShowAllBlogPostsPage)).Methods("GET")
-	router.HandleFunc("/blog-post/new", auth.RequireAuth(handler.HandleNewBlogPostPage)).Methods("GET")
-	router.HandleFunc("/blog-post", auth.RequireAuth(handler.HandleNewBlogPost)).Methods("POST")
-	router.HandleFunc("/blog-post/edit/{id}", auth.RequireAuth(handler.HandleBlogPostEditPage)).Methods("GET")
-	router.HandleFunc("/blog-post/{id}", auth.RequireAuth(handler.HandleDeleteBlogPost)).Methods("DELETE")
-	router.HandleFunc("/blog-post/{id}", auth.RequireAuth(handler.HandleUpdateBlogPost)).Methods("PUT")
+	// routes for every collection
+	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Index)).Methods("GET")           // all the posts
+	router.HandleFunc("/{collection}/new", auth.RequireAuth(handler.New)).Methods("GET")         // new post page
+	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Create)).Methods("POST")         // create new post htmx endpoint
+	router.HandleFunc("/{collection}/edit/{id}", auth.RequireAuth(handler.Edit)).Methods("GET")  // edit post page
+	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Destroy)).Methods("DELETE") // delete post htmx endpoint
+	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Update)).Methods("PUT")     // update post htmx endpoint
 
 	// auth
-	router.HandleFunc("/login", handler.HandleLoginPage).Methods("GET")
-	router.HandleFunc("/auth/{provider}", handler.HandleProviderLogin).Methods("GET")
-	router.HandleFunc("/auth/{provider}/callback", handler.HandleAuthCallbackFunction).Methods("GET")
-	router.HandleFunc("/auth/logout/{provider}", handler.HandleLogout).Methods("GET")
+	router.HandleFunc("/login", handler.LoginPage).Methods("GET")                       // login page
+	router.HandleFunc("/auth/{provider}", handler.ProviderLogin).Methods("GET")         // login with provider
+	router.HandleFunc("/auth/{provider}/callback", handler.AuthCallback).Methods("GET") // callback from provider
+	router.HandleFunc("/auth/logout/{provider}", handler.Logout).Methods("GET")         // logout
 
 	log.Printf("Server: Listening on %s:%s\n", config.Envs.PublicHost, config.Envs.Port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%s", config.Envs.Port), router))

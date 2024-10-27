@@ -1,14 +1,16 @@
 package components
 
-templ Editor(fileName string, blogConfig *string, blogPost *string) {
+import "github.com/Open-Code-Zone/cms/config"
+
+templ Editor(fileName string, collectionContent *string, collectionConfig *config.Collection) {
 	<div class="flex-1 flex flex-col">
 		<script src="/public/js/bundle.js" type="module"></script>
 		<main class="flex-1 overflow-auto p-8">
 			<form
-				if blogPost != nil {
-					hx-put={ "/blog-post/" + fileName }
+				if collectionContent !=nil {
+					hx-put={ "/" + collectionConfig.Collection + "/" + fileName }
 				} else {
-					hx-post="/blog-post"
+					hx-post={ "/" + collectionConfig.Collection }
 				}
 				hx-target="#alert-toast"
 				class="flex flex-row gap-2 max-w-5xl mx-auto"
@@ -16,7 +18,7 @@ templ Editor(fileName string, blogConfig *string, blogPost *string) {
 				<input
 					type="text"
 					disabled
-					data-blog-config={ *blogConfig }
+					data-blog-config={ collectionConfig.ToYAMLString() }
 					id="fileName"
 					name="fileName"
 					value={ fileName }
@@ -24,8 +26,8 @@ templ Editor(fileName string, blogConfig *string, blogPost *string) {
 					class="flex-grow cursor-not-allowed bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
 				/>
 				<textarea data-id={ fileName } hidden class="hidden" id="contentInput" name="content">
-					if blogPost != nil {
-						{ *blogPost }
+					if collectionContent != nil {
+						{ *collectionContent }
 					}
 				</textarea>
 				<button
@@ -44,7 +46,7 @@ templ Editor(fileName string, blogConfig *string, blogPost *string) {
 						></path>
 					</svg>
 					<span class="button-text">
-						if blogPost != nil {
+						if collectionContent != nil {
 							Update
 						} else {
 							Publish

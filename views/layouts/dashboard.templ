@@ -1,6 +1,11 @@
 package layouts
 
-templ DashboardLayout(nav bool) {
+import (
+	"github.com/Open-Code-Zone/cms/config"
+	"strings"
+)
+
+templ DashboardLayout() {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -26,11 +31,13 @@ templ DashboardLayout(nav bool) {
 					</div>
 					<nav>
 						<ul>
-							<li class="mb-1 text-sm">
-								<a href="/blog-post" class="block py-1">
-									All Posts
-								</a>
-							</li>
+							for _, collection := range *config.Envs.CollectionConfig {
+								<li class="mb-1 text-sm">
+									<a href={ templ.SafeURL("/" + collection.Collection) } class="block py-1">
+										{ strings.Title(collection.Collection) }
+									</a>
+								</li>
+							}
 						</ul>
 					</nav>
 				</div>

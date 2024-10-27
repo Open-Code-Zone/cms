@@ -2,12 +2,46 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v2"
 )
+
+type CollectionConfig []Collection
+
+type Collection struct {
+	Collection     string       `yaml:"collection"`
+	GitPath        string       `yaml:"git_path"`
+	FileNameFormat string       `yaml:"file_name_format"`
+	MetadataSchema []SchemaItem `yaml:"metadata_schema"`
+}
+
+type SchemaItem struct {
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Type        string `yaml:"type"`
+	Required    bool   `yaml:"required"`
+	ItemsType   string `yaml:"items_type,omitempty"`
+}
+
+func (c *Collection) ToYAMLString() (string, error) {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling to YAML: %w", err)
+	}
+	return string(data), nil
+}
+
+func (c *CollectionConfig) GetCollectionConfig(collection string) *Collection {
+	for _, col := range *c {
+		if col.Collection == collection {
+			return &col
+		}
+	}
+	return nil
+}
 
 type Config struct {
 	PublicHost              string
@@ -20,7 +54,7 @@ type Config struct {
 	AzureADClientSecret     string
 	AzureADTenantID         string
 	GitHubToken             string
-	BlogPostConfig          string
+	CollectionConfig        *CollectionConfig
 }
 
 const (
@@ -28,7 +62,6 @@ const (
 )
 
 var Envs Config
-var blogConfig string
 
 func init() {
 	// Load the .env file
@@ -44,9 +77,12 @@ func init() {
 func initConfig() Config {
 	data, err := os.ReadFile("config.yaml")
 	if err != nil {
-    log.Fatalf("Error reading config.yaml: %v", err)
+		panic(fmt.Sprintf("Error reading config.yaml: %v", err))
 	}
-	blogConfig = string(data)
+	var collectionConfig CollectionConfig
+	if err := yaml.Unmarshal(data, &collectionConfig); err != nil {
+		panic(fmt.Sprintf("Error unmarshaling config.yaml: %v", err))
+	}
 
 	return Config{
 		PublicHost:              getEnv("PUBLIC_HOST", "http://localhost"),
@@ -59,7 +95,7 @@ func initConfig() Config {
 		AzureADClientSecret:     getEnvOrError("AZURE_AD_CLIENT_SECRET"),
 		AzureADTenantID:         getEnvOrError("AZURE_AD_TENANT_ID"),
 		GitHubToken:             getEnvOrError("GITHUB_TOKEN"),
-		BlogPostConfig:          blogConfig,
+		CollectionConfig:        &collectionConfig,
 	}
 }
 

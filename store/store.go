@@ -1,67 +1,22 @@
 package store
 
 import (
-	"database/sql"
-	"errors"
+	"time"
+
+	"github.com/Open-Code-Zone/cms/config"
+	"github.com/Open-Code-Zone/cms/internal/database"
 )
 
-var ErrorNotFound = errors.New("Record Not Found")
-
 type Storage struct {
-	db *sql.DB
+	DB          *database.Queries
+	Collections *config.CollectionConfig
 }
 
-type Store interface {
-	//CreateCar(car *types.Car) (*types.Car, error)
-	//GetCars() ([]types.Car, error)
-	//DeleteCar(id string) error
-	//FindCarsByNameMakeOrBrand(search string) ([]types.Car, error)
-}
-
-func NewStore(db *sql.DB) *Storage {
+func NewStore(q *database.Queries, collections *config.CollectionConfig) *Storage {
 	return &Storage{
-		db: db,
+		DB:          q,
+		Collections: collections,
 	}
 }
 
-func (s *Storage) DeleteCar(id string) error {
-	result, err := s.db.Exec("DELETE FROM cars WHERE id = ?", id)
-    if rowsAffected, _ := result.RowsAffected(); rowsAffected == 0{
-        return ErrorNotFound
-    }
-	return err
-}
 
-//func (s *Storage) CreateCar(c *types.Car) (*types.Car, error) {
-//	row, err := s.db.Exec("INSERT INTO cars (brand, make, model, year, imageURL) VALUES (?, ?, ?, ?, ?)", c.Brand, c.Make, c.Model, c.Year, c.ImageURL)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	id, err := row.LastInsertId()
-//	if err != nil {
-//		return nil, err
-//	}
-//	c.ID = int(id)
-//
-//	return c, nil
-//}
-//
-//func (s *Storage) GetCars() ([]types.Car, error) {
-//	rows, err := s.db.Query("SELECT * FROM cars")
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer rows.Close()
-//
-//	var cars []types.Car
-//	for rows.Next() {
-//		car, err := scanCar(rows)
-//		if err != nil {
-//			return nil, err
-//		}
-//		cars = append(cars, car)
-//	}
-//
-//	return cars, nil
-//}

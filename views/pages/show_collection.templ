@@ -2,20 +2,21 @@ package pages
 
 import (
 	"fmt"
+	"github.com/Open-Code-Zone/cms/config"
 	"github.com/Open-Code-Zone/cms/types"
 	"github.com/Open-Code-Zone/cms/views/layouts"
+	"strings"
 )
 
-templ ShowBlogPosts(contents []*types.MarkdownFile) {
-	@layouts.DashboardLayout(true) {
+templ ShowCollectionItems(contents []*types.MarkdownFile, collection *config.Collection) {
+	@layouts.DashboardLayout() {
 		<div class="w-full max-w-5xl mx-auto my-6 flex justify-between items-center">
-			<h1 class="text-xl font-semibold leading-6 text-gray-900">All Blog Posts</h1>
+			<h1 class="text-xl font-semibold leading-6 text-gray-900">All { strings.Title(collection.Collection) }</h1>
 			<a
-				href="/blog-post/new"
+				href={templ.SafeURL(collection.Collection + "/new")}
 				class="flex cursor-pointer items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
 			>
 				New
-				Post
 			</a>
 		</div>
 		<table class="w-full text-xl border mx-auto max-w-5xl divide-y divide-gray-200 dark:divide-neutral-700">
@@ -31,20 +32,21 @@ templ ShowBlogPosts(contents []*types.MarkdownFile) {
 			</thead>
 			<tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
 				for index, content := range contents {
-					<tr id={ "blog-" + fmt.Sprint(index) }>
+					<tr id={ collection.Collection + fmt.Sprint(index) }>
 						<td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 dark:text-neutral-200">
 							{ content.FileName }
 						</td>
 						<td class="flex justify-between px-6 py-4 whitespace-nowrap text-gray-800 dark:text-neutral-200">
 							<a
 								class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
-								href={ templ.SafeURL("/blog-post/edit/" + content.FileName) }
+								href={ templ.SafeURL("/" + collection.Collection + "/edit/" + content.FileName) }
 							>
 								Edit
 							</a>
 							<button
-								hx-target={ "#blog-" + fmt.Sprint(index) }
-								hx-delete={ "/blog-post/" + content.FileName }
+								hx-target={"#" + collection.Collection + fmt.Sprint(index) }
+								hx-delete={ "/" + collection.Collection + "/" +
+          content.FileName }
 								class="text-red-600"
 							>
 								Delete

@@ -1,0 +1,13 @@
+package pages
+
+import (
+	"github.com/Open-Code-Zone/cms/config"
+	"github.com/Open-Code-Zone/cms/views/components"
+	"github.com/Open-Code-Zone/cms/views/layouts"
+)
+
+templ EditCollection(id string, collectionContent *string, collectionConfig *config.Collection) {
+	@layouts.DashboardLayout() {
+		@components.Editor(id, collectionContent, collectionConfig)
+	}
+}

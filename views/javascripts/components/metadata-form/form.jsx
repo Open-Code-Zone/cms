@@ -10,7 +10,7 @@ import { format } from "date-fns";
 
 const fileNameInput = document.getElementById('fileName');
 const initialFileName = fileNameInput.value
-const blogConfig = jsyaml.load(document.getElementById("fileName").getAttribute("data-blog-config"))[0];
+const blogConfig = jsyaml.load(document.getElementById("fileName").getAttribute("data-blog-config"));
 
 const fileNameformat = blogConfig.file_name_format
 // get the list of metadata fields from format

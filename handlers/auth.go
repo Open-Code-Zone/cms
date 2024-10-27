@@ -10,7 +10,7 @@ import (
 	"github.com/markbates/goth/gothic"
 )
 
-func (h *Handler) HandleLoginPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LoginPage(w http.ResponseWriter, r *http.Request) {
 	_, err := auth.GetSessionUser(r)
 	if err != nil {
 		log.Println(err)
@@ -21,7 +21,7 @@ func (h *Handler) HandleLoginPage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *Handler) HandleProviderLogin(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ProviderLogin(w http.ResponseWriter, r *http.Request) {
 	if u, err := gothic.CompleteUserAuth(w, r); err == nil {
 		log.Printf("User already authenticated! %v", u)
 
@@ -31,7 +31,7 @@ func (h *Handler) HandleProviderLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) HandleAuthCallbackFunction(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AuthCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		fmt.Fprintln(w, err)
@@ -48,7 +48,7 @@ func (h *Handler) HandleAuthCallbackFunction(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	log.Println("Logging out...")
 
 	err := gothic.Logout(w, r)
