@@ -17,14 +17,14 @@ func (h *Handler) LoginPage(w http.ResponseWriter, r *http.Request) {
 		pages.LoginPage().Render(r.Context(), w)
 	}
 
-	w.Header().Set("Location", "/blog-post")
+	// instead of redirecting to predeifined path, redirect to previous page from where it got redirected to login page
+	w.Header().Set("Location", r.Header.Get("Referer"))
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (h *Handler) ProviderLogin(w http.ResponseWriter, r *http.Request) {
 	if u, err := gothic.CompleteUserAuth(w, r); err == nil {
 		log.Printf("User already authenticated! %v", u)
-
 		pages.LoginPage().Render(r.Context(), w)
 	} else {
 		gothic.BeginAuthHandler(w, r)
@@ -44,7 +44,7 @@ func (h *Handler) AuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", "/blog-post")
+	w.Header().Set("Location", r.Header.Get("Referer"))
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 

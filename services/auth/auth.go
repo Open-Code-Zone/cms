@@ -75,7 +75,7 @@ func RequireAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := GetSessionUser(r)
 		if err != nil {
-			log.Println(err)
+			log.Println("error occured getting session", err)
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
