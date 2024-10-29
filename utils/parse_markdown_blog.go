@@ -1,16 +1,14 @@
 package utils
 
 import (
-	"bytes"
-	"fmt"
+	"encoding/json"
+	"log"
+	"regexp"
 	"strings"
-
-	"github.com/yuin/goldmark"
-	"gopkg.in/yaml.v2"
-	"time"
 	"unicode"
 
-	"github.com/Open-Code-Zone/cms/types"
+	"github.com/Open-Code-Zone/cms/internal/database"
+	"gopkg.in/yaml.v2"
 )
 
 func sanitizeFilename(title string) string {
@@ -26,60 +24,73 @@ func sanitizeFilename(title string) string {
 	}, title)
 }
 
-func createFrontMatter(blogPost *types.BlogPost) string {
-	return fmt.Sprintf(`---
-title: "%s"
-description: "%s"
-date: %s
-authors: [%s]
-image: "%s"
-tags: [%s]
----`,
-		blogPost.Metadata.Title,
-		blogPost.Metadata.Description,
-		time.Now().Format("2006-01-02"),
-		strings.Join(blogPost.Metadata.Authors, ", "),
-		blogPost.Metadata.Image,
-		strings.Join(blogPost.Metadata.Tags, ", "))
-}
-
 // ParseMarkdown takes a raw markdown string, separates the frontmatter from the content, and parses them.
-func ParseMarkdown(rawMarkdown string) (*types.BlogPost, error) {
-	// Split the frontmatter and content based on the "---" delimiter.
-	parts := strings.SplitN(rawMarkdown, "---", 3)
-	if len(parts) < 3 {
-		return nil, fmt.Errorf("invalid markdown format")
+func ExtractFrontMatter(fileContentWithFrontMatter string) (string, string) {
+	// Define regex pattern for front matter block
+	frontMatterPattern := regexp.MustCompile(`(?s)^---\n(.*?)\n---\n`)
+	frontMatter := make(map[string]interface{})
+
+	// Find front matter block
+	match := frontMatterPattern.FindStringSubmatch(fileContentWithFrontMatter)
+	if len(match) < 2 {
+		// No front matter found, return original content and empty JSON object
+		emptyFrontMatterJSON, _ := json.Marshal(frontMatter)
+		return fileContentWithFrontMatter, string(emptyFrontMatterJSON)
 	}
 
-	// Parse frontmatter (YAML metadata).
-	var metadata types.BlogMetadata
-	err := yaml.Unmarshal([]byte(parts[1]), &metadata)
+	// Extract front matter and remaining content
+	frontMatterYaml := match[1]
+	content := strings.TrimPrefix(fileContentWithFrontMatter, match[0])
+
+	// Parse YAML front matter into map
+	if err := yaml.Unmarshal([]byte(frontMatterYaml), &frontMatter); err != nil {
+		log.Println("Error parsing front matter:", err)
+		return content, "{}" // Return empty JSON object on error
+	}
+
+	// Convert front matter to JSON string
+	frontMatterJSON, err := json.Marshal(frontMatter)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing frontmatter: %v", err)
+		log.Println("Error converting front matter to JSON:", err)
+		return content, "{}" // Return empty JSON object on error
 	}
 
-	// Parse the main content markdown.
-	var buf bytes.Buffer
-	md := goldmark.New()
-	if err := md.Convert([]byte(parts[2]), &buf); err != nil {
-		return nil, fmt.Errorf("error parsing markdown content: %v", err)
-	}
-
-	return &types.BlogPost{
-		Metadata: metadata,
-		Content:  buf.String(),
-	}, nil
+	return content, string(frontMatterJSON)
 }
 
-func GenerateMarkdown(metadata types.BlogMetadata, content string) (string, error) {
-	frontmatter, err := yaml.Marshal(&metadata)
+func GenerateMarkdownFile(collectionItem database.GetCollectionItemRow) string {
+	var markdownFile strings.Builder
+
+	yamlMetadata, err := convertJSONToYAML(collectionItem.Metadata)
 	if err != nil {
-		return "", fmt.Errorf("error generating frontmatter: %v", err)
+		log.Println("Error converting JSON to YAML:", err)
+		return ""
 	}
 
-	markdown := fmt.Sprintf(`---
-%s---
-%s`, string(frontmatter), content)
+	// Write front matter
+	markdownFile.WriteString("---\n")
+	markdownFile.WriteString(string(yamlMetadata))
+	markdownFile.WriteString("\n---\n")
 
-	return markdown, nil
+	// Write content
+	markdownFile.WriteString(collectionItem.Content)
+
+	return markdownFile.String()
+}
+
+func convertJSONToYAML(jsonStr string) ([]byte, error) {
+	// Step 1: Unmarshal the JSON string into a Go map
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 2: Marshal the Go map to YAML
+	yamlData, err := yaml.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return yamlData, nil
 }

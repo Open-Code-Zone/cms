@@ -2,20 +2,15 @@ import React from 'react';
 import "../css/prosemirror.css";
 import { createRoot } from 'react-dom/client';
 import Editor from "./components/editor/advanced-editor";
-import MetaDataForm from './components/metadata-form/form';
 import jsyaml from 'js-yaml';
+import MetaDataForm from './components/forms/metadata_form';
+import FilterForm from './components/forms/filter_form';
 
-const editorContainer = document.getElementById('editor');
-const root = createRoot(editorContainer);
-const textarea = document.getElementById('contentInput');
-const initialValue = textarea.value;
-
-const id = textarea.getAttribute("data-id");
-const submitButton = document.getElementById('submit-button');
-
+// Editor related functions
 const loadContentFromLocalStorage = (id) => {
   const savedContent = window.localStorage.getItem(id);
-  return savedContent || textarea.value || '';
+  const textarea = document.getElementById('contentInput');
+  return savedContent || (textarea ? textarea.value : '') || '';
 };
 
 const parseMarkdownContent = (fileContent) => {
@@ -36,34 +31,31 @@ const saveContentToLocalStorage = (id, fileContent) => {
 
 const generateFileContent = (frontMatter, markdownContent) => {
   const yaml = jsyaml.dump(frontMatter);
-  // remove the first newline character from the markdown content
-  // we don't want to replace all newlines only the starting one
   try {
     markdownContent = markdownContent.replace(/^\n/, '');
   } catch (err) {
     console.log(err)
   }
-
   return `---\n${yaml}---\n${markdownContent}`;
 };
 
-const initialContent = parseMarkdownContent(loadContentFromLocalStorage(id));
-
-const NovelEditor = () => {
+// Novel Editor Component
+const NovelEditor = ({ id, initialValue }) => {
+  const initialContent = parseMarkdownContent(loadContentFromLocalStorage(id));
   const [markdownContent, setMarkdownContent] = React.useState(initialContent.markdownContent);
   const [frontMatter, setFrontMatter] = React.useState(initialContent.frontMatter);
+  const submitButton = document.getElementById('submit-button');
+  const textarea = document.getElementById('contentInput');
 
   React.useEffect(() => {
+    if (!textarea || !submitButton) return;
+
     const fileContent = generateFileContent(frontMatter, markdownContent);
     textarea.value = fileContent;
     saveContentToLocalStorage(id, fileContent);
 
-    if (fileContent !== initialValue) {
-      submitButton.disabled = false;
-    } else {
-      submitButton.disabled = true;
-    }
-  }, [frontMatter, markdownContent]);
+    submitButton.disabled = fileContent === initialValue;
+  }, [frontMatter, markdownContent, id, initialValue]);
 
   return (
     <>
@@ -73,4 +65,35 @@ const NovelEditor = () => {
   );
 };
 
-root.render(<NovelEditor />);
+// Initialize components based on presence of DOM elements
+const initializeComponents = () => {
+  // Try to initialize editor
+  const editorContainer = document.getElementById('editor');
+  if (editorContainer) {
+    const textarea = document.getElementById('contentInput');
+    if (textarea) {
+      const editorRoot = createRoot(editorContainer);
+      const initialValue = textarea.value || "";
+      const id = textarea.getAttribute("data-id");
+
+      editorRoot.render(
+        <NovelEditor id={id} initialValue={initialValue} />
+      );
+    }
+  }
+
+  // Try to initialize filter form
+  const filterForm = document.getElementById('filterFormRoot');
+  if (filterForm) {
+    try {
+      const filterFormRoot = createRoot(filterForm);
+      const yamlConfig = jsyaml.load(filterForm.getAttribute('data-config'));
+      filterFormRoot.render(<FilterForm config={yamlConfig} />);
+    } catch (error) {
+      console.error('Error initializing filter form:', error);
+    }
+  }
+};
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', initializeComponents);

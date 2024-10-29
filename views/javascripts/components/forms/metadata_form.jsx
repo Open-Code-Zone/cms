@@ -8,14 +8,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calender";
 import { format } from "date-fns";
 
-const fileNameInput = document.getElementById('fileName');
-const initialFileName = fileNameInput.value
-const blogConfig = jsyaml.load(document.getElementById("fileName").getAttribute("data-blog-config"));
-
-const fileNameformat = blogConfig.file_name_format
-// get the list of metadata fields from format
-const metadataFields = fileNameformat.match(/{(.*?)}/g).map((field) => field.slice(1, -1));
-
 // Helper components
 const DatePickerInput = ({ value, onSelect }) => {
   const [date, setDate] = React.useState(value ? new Date(value) : null);
@@ -54,8 +46,8 @@ const EditableTitle = ({ t, onChange }) => {
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto'; // Reset the height
-      textarea.style.height = `${textarea.scrollHeight}px`; // Set it based on the content
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   };
 
@@ -66,18 +58,10 @@ const EditableTitle = ({ t, onChange }) => {
   };
 
   React.useEffect(() => {
-    adjustTextareaHeight(); // Adjust height on initial render
-
-    // Adjust height on window resize
-    const handleResize = () => {
-      adjustTextareaHeight();
-    };
-
+    adjustTextareaHeight();
+    const handleResize = () => adjustTextareaHeight();
     window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
@@ -86,7 +70,6 @@ const EditableTitle = ({ t, onChange }) => {
       value={title}
       onChange={handleInputChange}
       onKeyDown={(e) => {
-        // Prevent new line (Enter key) input
         if (e.key === 'Enter') {
           e.preventDefault();
         }
@@ -141,15 +124,43 @@ const PillInput = ({ value, onChange, placeholder }) => {
 };
 
 export default function MetaDataForm({ frontMatter, setFrontMatter }) {
+  // Initialize config state
+  const [config, setConfig] = React.useState(null);
+  const [fileNameFormat, setFileNameFormat] = React.useState("");
+  const [metadataFields, setMetadataFields] = React.useState([]);
+  const [initialFileName, setInitialFileName] = React.useState("");
 
+  // Initialize configuration on component mount
   React.useEffect(() => {
-    if (initialFileName !== "new-draft.md") return
-    fileNameInput.value = metadataFields
-      .map((field) => frontMatter[field].replace(/\s+/g, '-'))
-      .join('-') + '.md';
+    const fileNameInput = document.getElementById('fileName');
+    if (fileNameInput) {
+      try {
+        const blogConfig = jsyaml.load(fileNameInput.getAttribute("data-blog-config"));
+        setConfig(blogConfig);
+        setFileNameFormat(blogConfig.file_name_format);
+        setInitialFileName(fileNameInput.value);
 
-  }, [frontMatter]);
+        // Extract metadata fields from format
+        const fields = blogConfig.file_name_format.match(/{(.*?)}/g)?.map(field => field.slice(1, -1)) || [];
+        setMetadataFields(fields);
+      } catch (error) {
+        console.error('Error loading blog configuration:', error);
+      }
+    }
+  }, []);
 
+  // Handle filename updates
+  React.useEffect(() => {
+    if (!initialFileName || initialFileName !== "new-draft.md" || !metadataFields.length) return;
+
+    const fileNameInput = document.getElementById('fileName');
+    if (fileNameInput) {
+      const newFileName = metadataFields
+        .map((field) => (frontMatter[field] || '').toString().replace(/\s+/g, '-'))
+        .join('-') + '.md';
+      fileNameInput.value = newFileName;
+    }
+  }, [frontMatter, initialFileName, metadataFields]);
 
   const handleInputChange = (name, value) => {
     setFrontMatter({
@@ -234,13 +245,17 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
   };
 
   const handleImageUpload = (fieldName) => {
-    // Handle image upload logic
     console.log('Image upload triggered for', fieldName);
   };
 
+  // If configuration hasn't loaded yet, return null or a loading state
+  if (!config) {
+    return null;
+  }
+
   return (
     <form className="max-w-2xl mx-auto space-y-6 p-6 bg-background">
-      {blogConfig.metadata_schema.map((field) => (
+      {config.metadata_schema.map((field) => (
         <div key={field.name}>
           {renderInputField(field)}
         </div>

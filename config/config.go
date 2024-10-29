@@ -23,6 +23,7 @@ type SchemaItem struct {
 	Description string `yaml:"description"`
 	Type        string `yaml:"type"`
 	Required    bool   `yaml:"required"`
+	Filter      bool   `yaml:"filter"`
 	ItemsType   string `yaml:"items_type,omitempty"`
 }
 

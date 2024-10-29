@@ -1,0 +1,35 @@
+package components
+
+import (
+	"fmt"
+	"github.com/Open-Code-Zone/cms/config"
+	"github.com/Open-Code-Zone/cms/internal/database"
+)
+
+templ FilteredItems(markdownFiles []database.ListAllCollectionItemsRow, collection *config.Collection) {
+	<tbody id="results" class="divide-y divide-gray-200 dark:divide-neutral-700">
+		for index, file := range markdownFiles {
+			<tr class="hover:bg-gray-100" id={ collection.Collection + fmt.Sprint(index) }>
+				<td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 dark:text-neutral-200">
+					{ file.Filename }
+				</td>
+				<td class="flex justify-between px-6 py-4 whitespace-nowrap text-gray-800 dark:text-neutral-200">
+					<a
+						class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
+						href={ templ.SafeURL("/" + collection.Collection + "/edit/" + file.Filename) }
+					>
+						Edit
+					</a>
+					<button
+						hx-target={"#" + collection.Collection + fmt.Sprint(index) }
+						hx-delete={ "/" + collection.Collection + "/" +
+      file.Filename }
+						class="text-red-600"
+					>
+						Delete
+					</button>
+				</td>
+			</tr>
+		}
+	</tbody>
+}

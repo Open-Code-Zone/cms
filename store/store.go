@@ -1,22 +1,22 @@
 package store
 
 import (
-	"time"
+	"database/sql"
 
 	"github.com/Open-Code-Zone/cms/config"
 	"github.com/Open-Code-Zone/cms/internal/database"
 )
 
 type Storage struct {
-	DB          *database.Queries
+	DB          *sql.DB
+	Queries     *database.Queries
 	Collections *config.CollectionConfig
 }
 
-func NewStore(q *database.Queries, collections *config.CollectionConfig) *Storage {
+func NewStore(db *sql.DB, queries *database.Queries, collections *config.CollectionConfig) *Storage {
 	return &Storage{
-		DB:          q,
+		DB:          db,
+		Queries:     queries,
 		Collections: collections,
 	}
 }
-
-

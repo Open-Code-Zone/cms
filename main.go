@@ -23,9 +23,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	queries := database.New(db)
+	queries := database.New()
 	// db store
-	store := store.NewStore(queries, config.Envs.CollectionConfig)
+	store := store.NewStore(db, queries, config.Envs.CollectionConfig)
 	pingStorage(db)
 
 	// TODO: currently FileSystemStore is used since CookieStore doesn't able to store cookie of larger size
@@ -47,6 +47,9 @@ func main() {
 
 	handler := handlers.New(store, githubClient)
 
+	// root route
+	router.HandleFunc("/", handler.PingIndex).Methods("GET")
+
 	// static assets
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
@@ -57,12 +60,13 @@ func main() {
 	router.HandleFunc("/auth/logout/{provider}", handler.Logout).Methods("GET")         // logout
 
 	// routes for every collection
-	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Index)).Methods("GET")           // all the posts
-	router.HandleFunc("/{collection}/new", auth.RequireAuth(handler.New)).Methods("GET")         // new post page
-	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Create)).Methods("POST")         // create new post htmx endpoint
-	router.HandleFunc("/{collection}/edit/{id}", auth.RequireAuth(handler.Edit)).Methods("GET")  // edit post page
-	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Destroy)).Methods("DELETE") // delete post htmx endpoint
-	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Update)).Methods("PUT")     // update post htmx endpoint
+	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Index)).Methods("GET")           // all the collection items
+	router.HandleFunc("/{collection}/new", auth.RequireAuth(handler.New)).Methods("GET")         // new collection item page
+	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Create)).Methods("POST")         // create new collection item htmx endpoint
+	router.HandleFunc("/{collection}/edit/{id}", auth.RequireAuth(handler.Edit)).Methods("GET")  // edit collection item page
+	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Destroy)).Methods("DELETE") // delete collection item htmx endpoint
+	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Update)).Methods("PUT")     // update collection item htmx endpoint
+	router.HandleFunc("/{collection}/filter", auth.RequireAuth(handler.Filter)).Methods("POST")  // filter collection items htmx endpoint
 
 	log.Printf("Server: Listening on %s:%s\n", config.Envs.PublicHost, config.Envs.Port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%s", config.Envs.Port), router))

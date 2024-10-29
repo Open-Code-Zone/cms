@@ -5,25 +5,31 @@
     - name: title
       type: string
       description: "The title of the blog post"
+      filter: true
       required: true
     - name: description
       type: string
+      filter: false
       description: "A short description of the post"
       required: true
     - name: date
       type: datetime
+      filter: true
       description: "The date and time the post was published"
       required: true
     - name: authors
       type: array
+      filter: true
       items_type: string
       description: "List of authors for the post"
       required: true
     - name: image
       type: file
+      filter: false
       description: "URL of the main image for the post"
       required: false
     - name: tags
+      filter: true
       type: array
       items_type: string
       description: "Tags related to the post"
@@ -34,26 +40,32 @@
   file_name_format: "{name}"
   metadata_schema:
     - name: name
+      filter: true
       type: string
       description: "The name of the author"
       required: true
     - name: image
+      filter: false
       type: file
       description: "URL of the author's image"
       required: false
     - name: location
+      filter: false
       type: string
       description: "The location of the author"
       required: false
     - name: website
+      filter: false
       type: string
       description: "URL of the author's website"
       required: false
     - name: twitter
+      filter: false
       type: string
       description: "Twitter handle of the author"
       required: false
     - name: instagram
+      filter: false
       type: string
       description: "Instagram handle of the author"
       required: false

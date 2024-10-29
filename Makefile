@@ -16,14 +16,15 @@ tailwind:
 templ:
 	@templ generate -watch -proxy=http://localhost:7000
 
-migration: # add migration name at the end (ex: make migration create-cars-table)
-	@migrate create -ext sql -dir cmd/migrate/migrations $(filter-out $@,$(MAKECMDGOALS))
-
 migrate-up:
-	@go run cmd/migrate/main.go up
+	@goose -dir db/migrations sqlite3 ./cms.db up
 
 migrate-down:
-	@go run cmd/migrate/main.go down
+	@goose -dir db/migrations sqlite3 ./cms.db down
+
+seed:
+	@go run cmd/seed/main.go
+
 
 # New target for esbuild
 build-js:
