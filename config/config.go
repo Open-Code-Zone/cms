@@ -44,6 +44,52 @@ func (c *CollectionConfig) GetCollectionConfig(collection string) *Collection {
 	return nil
 }
 
+type UserConfig []User
+
+type User struct {
+	Email                 string                 `yaml:"email"`
+	IsAdmin               bool                   `yaml:"is_admin"`
+	CollectionPermissions []CollectionPermission `yaml:"collection_permissions"`
+}
+
+type CollectionPermission struct {
+	Name            string                  `yaml:"name"`
+	Permission      string                  `yaml:"permission"`
+	DefaultMetadata map[string]MetadataItem `yaml:"default_metadata,omitempty"`
+}
+
+type MetadataItem struct {
+	Value  interface{} `yaml:"value"`
+	Strict bool        `yaml:"strict"`
+}
+
+func (c *CollectionPermission) ToYAMLString() (string, error) {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling to YAML: %w", err)
+	}
+	return string(data), nil
+}
+
+func (u *UserConfig) GetUserConfig(email string) *User {
+	for _, user := range *u {
+		if user.Email == email {
+			return &user
+		}
+	}
+	return nil
+}
+
+func (u *User) GetCollectionPermission(collection string) *CollectionPermission {
+	for _, col := range u.CollectionPermissions {
+		if col.Name == collection {
+			return &col
+		}
+	}
+
+	return nil
+}
+
 type Config struct {
 	PublicHost              string
 	Port                    string
@@ -56,6 +102,7 @@ type Config struct {
 	AzureADTenantID         string
 	GitHubToken             string
 	CollectionConfig        *CollectionConfig
+	UserConfig              *UserConfig
 }
 
 const (
@@ -76,13 +123,19 @@ func init() {
 }
 
 func initConfig() Config {
-	data, err := os.ReadFile("config.yaml")
+	configData, err := os.ReadFile("config.yaml")
 	if err != nil {
 		panic(fmt.Sprintf("Error reading config.yaml: %v", err))
 	}
 	var collectionConfig CollectionConfig
-	if err := yaml.Unmarshal(data, &collectionConfig); err != nil {
-		panic(fmt.Sprintf("Error unmarshaling config.yaml: %v", err))
+	if err := yaml.Unmarshal(configData, &collectionConfig); err != nil {
+		panic(fmt.Sprintf("Error unmarshaling config.yml: %v", err))
+	}
+
+	userConfigData, err := os.ReadFile("users.yaml")
+	var userConfig UserConfig
+	if err := yaml.Unmarshal(userConfigData, &userConfig); err != nil {
+		panic(fmt.Sprintf("Error unmarshaling users.yaml: %v", err))
 	}
 
 	return Config{
@@ -97,6 +150,7 @@ func initConfig() Config {
 		AzureADTenantID:         getEnvOrError("AZURE_AD_TENANT_ID"),
 		GitHubToken:             getEnvOrError("GITHUB_TOKEN"),
 		CollectionConfig:        &collectionConfig,
+		UserConfig:              &userConfig,
 	}
 }
 

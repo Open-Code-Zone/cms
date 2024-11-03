@@ -2,7 +2,7 @@ package components
 
 import "github.com/Open-Code-Zone/cms/config"
 
-templ Editor(fileName string, collectionContent *string, collectionConfig *config.Collection) {
+templ Editor(fileName string, collectionContent *string, collectionConfig *config.Collection, collectionPermission *config.CollectionPermission) {
 	<div class="flex-1 flex flex-col">
 		<main class="flex-1 overflow-auto p-8">
 			<form
@@ -17,7 +17,8 @@ templ Editor(fileName string, collectionContent *string, collectionConfig *confi
 				<input
 					readonly
 					type="text"
-					data-blog-config={ collectionConfig.ToYAMLString() }
+					data-collection-config={ collectionConfig.ToYAMLString() }
+					data-user-config={ collectionPermission.ToYAMLString() }
 					id="fileName"
 					name="fileName"
 					value={ fileName }

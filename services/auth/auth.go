@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,10 @@ import (
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/azureadv2"
 )
+
+type contextKey string
+
+const UserContextKey = contextKey("user")
 
 func NewAuthService(store sessions.Store) {
 	gothic.Store = store
@@ -73,15 +78,25 @@ func RemoveUserSession(w http.ResponseWriter, r *http.Request) {
 
 func RequireAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := GetSessionUser(r)
+		sessionUser, err := GetSessionUser(r)
 		if err != nil {
 			log.Println("error occured getting session", err)
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
+		userConfig := config.Envs.UserConfig
+		userEmail := sessionUser.RawData["userPrincipalName"].(string)
+		log.Println("name from RequireAuth", userEmail)
+		user := userConfig.GetUserConfig(userEmail)
+		log.Println("user from RequireAuth", user)
+		if user == nil {
+			log.Println("User not allowed to access the page")
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			return
+		}
 
-		log.Printf("user is authenticated! user: %v!", session.FirstName)
-		handlerFunc(w, r)
+		ctx := context.WithValue(r.Context(), UserContextKey, user)
+		handlerFunc(w, r.WithContext(ctx))
 	}
 }
 

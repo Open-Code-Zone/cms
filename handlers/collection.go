@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Open-Code-Zone/cms/config"
 	"github.com/Open-Code-Zone/cms/internal/database"
+	"github.com/Open-Code-Zone/cms/services/auth"
 	"github.com/Open-Code-Zone/cms/utils"
 	"github.com/Open-Code-Zone/cms/views/components"
 	"github.com/Open-Code-Zone/cms/views/pages"
@@ -18,20 +20,43 @@ import (
 // listing all the collection items for example blog posts, authors
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	user, _ := r.Context().Value(auth.UserContextKey).(*config.User) // error is not handled since it is already handled in auth middleware
+	log.Println("name from INDEX", user.Email)
+
 	collectionConfig := h.store.Collections.GetCollectionConfig(vars["collection"])
 	if collectionConfig == nil {
-		http.Error(w, "Collection doesn't exists", http.StatusInternalServerError)
+		http.Error(w, "Collection doesn't exist", http.StatusInternalServerError)
 		return
 	}
-	// fetching files from database
-	markdownFiles, err := h.store.Queries.ListAllCollectionItems(r.Context(), h.store.DB, collectionConfig.Collection)
+	queryBuilder, err := buildCollectionQuery(r, collectionConfig)
 	if err != nil {
-		log.Printf("Error fetching collection items: %v", err)
-		http.Error(w, "Failed to fetch collection items", http.StatusInternalServerError)
+		log.Printf("Error building query: %v", err)
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
-	pages.ShowCollectionItems(markdownFiles, collectionConfig).Render(r.Context(), w)
+	// Execute the query using sqlc
+	rows, err := h.store.DB.QueryContext(r.Context(), queryBuilder.query, queryBuilder.args...)
+	log.Printf("Executing query: %s with args: %v", queryBuilder.query, queryBuilder.args)
+	if err != nil {
+		log.Printf("Error querying database: %v", err)
+		http.Error(w, "Failed to filter collection items", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var items []database.ListAllCollectionItemsRow
+	for rows.Next() {
+		var item database.ListAllCollectionItemsRow
+		if err := rows.Scan(&item.Filename, &item.Content, &item.Metadata, &item.CreatedAt); err != nil {
+			log.Printf("Error scanning row: %v", err)
+			continue
+		}
+		items = append(items, item)
+	}
+
+	// Render the filtered items using the templ component
+	pages.ShowCollectionItems(items, collectionConfig).Render(r.Context(), w)
 }
 
 // rendering markdown editor with metadata form for creating new collection item
@@ -43,7 +68,13 @@ func (h *Handler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pages.EditCollection("new-draft.md", nil, collectionConfig).Render(r.Context(), w)
+	userConfig, _ := r.Context().Value(auth.UserContextKey).(*config.User) // error is not handled since it is already handled in auth middleware
+	log.Println("name from INDEX", userConfig.Email)
+	collectionPermissions := userConfig.GetCollectionPermission(collectionConfig.Collection)
+
+	log.Println("---------", *collectionConfig)
+	log.Println("#########", *collectionPermissions)
+	pages.EditCollection("new-draft.md", nil, collectionConfig, collectionPermissions).Render(r.Context(), w)
 }
 
 // creating collection item
@@ -93,11 +124,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
+
 	collectionConfig := h.store.Collections.GetCollectionConfig(vars["collection"])
 	if collectionConfig == nil {
 		http.Error(w, "Collection doesn't exists", http.StatusInternalServerError)
 		return
 	}
+
+	userConfig, _ := r.Context().Value(auth.UserContextKey).(*config.User) // error is not handled since it is already handled in auth middleware
+	log.Println("name from INDEX", userConfig.Email)
+	collectionPermissions := userConfig.GetCollectionPermission(collectionConfig.Collection)
 
 	params := database.GetCollectionItemParams{
 		Filename:       id,
@@ -111,7 +147,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileContent := utils.GenerateMarkdownFile(collectionItem)
-	pages.EditCollection(id, &fileContent, collectionConfig).Render(r.Context(), w)
+	pages.EditCollection(id, &fileContent, collectionConfig, collectionPermissions).Render(r.Context(), w)
 }
 
 // updating collection item with new content
@@ -201,67 +237,16 @@ func (h *Handler) Filter(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Collection doesn't exist", http.StatusInternalServerError)
 		return
 	}
-
-	// Parse the form data
-	if err := r.ParseForm(); err != nil {
-		log.Printf("Error parsing form: %v", err)
+	queryBuilder, err := buildCollectionQuery(r, collectionConfig)
+	if err != nil {
+		log.Printf("Error building query: %v", err)
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
-	// Build the filter query based on metadata schema
-	query := `
-		SELECT filename, content, metadata, created_at
-		FROM collections
-		WHERE collection_name = ?
-	`
-	args := []interface{}{collectionConfig.Collection}
-
-	// Get filterable fields from metadata schema
-	for _, field := range collectionConfig.MetadataSchema {
-		if !field.Filter {
-			continue
-		}
-
-		value := r.Form.Get(field.Name)
-		if value == "" {
-			continue
-		}
-
-		switch field.Type {
-		case "string":
-			query += " AND json_extract(metadata, '$." + field.Name + "') LIKE ?"
-			args = append(args, "%"+value+"%")
-		case "datetime":
-			dateValue := strings.Split(value, "T")[0]
-			date, err := time.Parse("2006-01-02", dateValue)
-			if err != nil {
-				continue
-			}
-			query += " AND DATE(json_extract(metadata, '$." + field.Name + "')) = ?"
-			args = append(args, date.Format("2006-01-02"))
-		case "array":
-			// Handle array types (authors, tags, etc.)
-			values := r.Form[field.Name]
-			if len(values) > 0 {
-				placeholders := make([]string, len(values))
-				for i, v := range values {
-					// For SQLite, we can check if the string representation contains the value
-					// This assumes the array is stored as a JSON array string
-					placeholders[i] = "instr(json_extract(metadata, '$." + field.Name + "'), ?)"
-					args = append(args, v)
-				}
-				query += " AND (" + strings.Join(placeholders, " > 0 OR ") + " > 0)"
-			}
-		}
-	}
-
-	// Add ordering
-	query += " ORDER BY created_at DESC"
-
 	// Execute the query using sqlc
-	rows, err := h.store.DB.QueryContext(r.Context(), query, args...)
-	log.Printf("Executing query: %s with args: %v", query, args)
+	rows, err := h.store.DB.QueryContext(r.Context(), queryBuilder.query, queryBuilder.args...)
+	log.Printf("Executing query: %s with args: %v", queryBuilder.query, queryBuilder.args)
 	if err != nil {
 		log.Printf("Error querying database: %v", err)
 		http.Error(w, "Failed to filter collection items", http.StatusInternalServerError)
@@ -285,5 +270,68 @@ func (h *Handler) Filter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the filtered items using the templ component
-	components.FilteredItems(items, collectionConfig).Render(r.Context(), w)
+	pages.ShowCollectionItems(items, collectionConfig).Render(r.Context(), w)
+}
+
+type QueryBuilder struct {
+	query string
+	args  []interface{}
+}
+
+// buildCollectionQuery constructs a SQL query with filters based on form data and collection config
+func buildCollectionQuery(r *http.Request, collectionConfig *config.Collection) (*QueryBuilder, error) {
+	// Parse the form data if not already parsed
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	qb := &QueryBuilder{
+		query: `
+			SELECT filename, content, metadata, created_at
+			FROM collections
+			WHERE collection_name = ?
+		`,
+		args: []interface{}{collectionConfig.Collection},
+	}
+
+	// Get filterable fields from metadata schema
+	for _, field := range collectionConfig.MetadataSchema {
+		if !field.Filter {
+			continue
+		}
+
+		value := r.Form.Get(field.Name)
+		if value == "" {
+			continue
+		}
+
+		switch field.Type {
+		case "string":
+			qb.query += " AND json_extract(metadata, '$." + field.Name + "') LIKE ?"
+			qb.args = append(qb.args, "%"+value+"%")
+		case "datetime":
+			dateValue := strings.Split(value, "T")[0]
+			date, err := time.Parse("2006-01-02", dateValue)
+			if err != nil {
+				continue
+			}
+			qb.query += " AND DATE(json_extract(metadata, '$." + field.Name + "')) = ?"
+			qb.args = append(qb.args, date.Format("2006-01-02"))
+		case "array":
+			values := r.Form[field.Name]
+			if len(values) > 0 {
+				placeholders := make([]string, len(values))
+				for i, v := range values {
+					placeholders[i] = "instr(json_extract(metadata, '$." + field.Name + "'), ?)"
+					qb.args = append(qb.args, v)
+				}
+				qb.query += " AND (" + strings.Join(placeholders, " > 0 OR ") + " > 0)"
+			}
+		}
+	}
+
+	// Add ordering
+	qb.query += " ORDER BY created_at DESC"
+
+	return qb, nil
 }

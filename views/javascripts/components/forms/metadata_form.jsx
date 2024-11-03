@@ -11,13 +11,15 @@ import { format } from "date-fns";
 // Helper components
 const DatePickerInput = ({ value, onSelect }) => {
   const [date, setDate] = React.useState(value ? new Date(value) : null);
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <Popover>
+    <Popover open={open}>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
           className={`w-[280px] justify-start text-left font-normal ${!date ? "text-muted-foreground" : ""}`}
+          onClick={() => setOpen(!open)}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -29,18 +31,19 @@ const DatePickerInput = ({ value, onSelect }) => {
           selected={date}
           onSelect={(v) => {
             setDate(v);
-            const formattedDate = `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+            //const formattedDate = `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
             onSelect(v);
+            setOpen(false);
           }}
           initialFocus
         />
       </PopoverContent>
-    </Popover>
+    </Popover >
   );
 };
 
-const EditableTitle = ({ t, onChange }) => {
-  const [title, setTitle] = React.useState(t);
+const EditableTitle = ({ value, onChange }) => {
+  const [title, setTitle] = React.useState(value);
   const textareaRef = React.useRef(null);
 
   const adjustTextareaHeight = () => {
@@ -81,34 +84,45 @@ const EditableTitle = ({ t, onChange }) => {
   );
 }
 
-const PillInput = ({ value, onChange, placeholder }) => {
+const PillInput = ({ value, onChange, placeholder, disable }) => {
   const [inputValue, setInputValue] = React.useState('');
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      onChange([...value, inputValue.trim()]);
-      setInputValue('');
+      handleAddValue();
     }
   };
 
+  const handleAddValue = () => {
+    if (disable) return; // Prevent adding pills when disabled
+    if (inputValue.trim()) {
+      if (value.includes(inputValue.trim())) return;
+      onChange([...value, inputValue.trim()]);
+      setInputValue('');
+    }
+  }
+
   const handleRemove = (index) => {
+    if (disable) return; // Prevent removing pills when disabled
     const newValue = value.filter((_, i) => i !== index);
     onChange(newValue);
   };
 
   return (
     <div className="flex flex-wrap gap-2 p-2 border rounded-md">
-      {value.map((item, index) => (
-        <span key={index} className="flex items-center pl-4 pr-2 py-1 text-sm bg-blue-600 text-primary-foreground rounded-full">
+      {value.map?.((item, index) => (
+        <span key={index} className="flex items-center px-3 py-1 text-sm bg-blue-600 text-primary-foreground rounded-md">
           {item}
-          <button
-            onClick={() => handleRemove(index)}
-            className="ml-2 text-primary-foreground hover:text-red-600 focus:outline-none"
-            aria-label="Remove pill"
-          >
-            <X size={16} />
-          </button>
+          {!disable && (
+            <button
+              onClick={() => handleRemove(index)}
+              className="ml-2 text-primary-foreground hover:text-red-600 focus:outline-none"
+              aria-label="Remove pill"
+            >
+              <X size={16} />
+            </button>
+          )}
         </span>
       ))}
       <input
@@ -116,8 +130,10 @@ const PillInput = ({ value, onChange, placeholder }) => {
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={handleAddValue}
         placeholder={placeholder}
         className="flex-grow text-sm placeholder:text-muted-foreground border-none p-1 focus:outline-none focus:ring-0"
+        disabled={disable} // Disable the input when disable is true
       />
     </div>
   );
@@ -125,7 +141,8 @@ const PillInput = ({ value, onChange, placeholder }) => {
 
 export default function MetaDataForm({ frontMatter, setFrontMatter }) {
   // Initialize config state
-  const [config, setConfig] = React.useState(null);
+  const [collectionConfig, setCollectionConfig] = React.useState(null);
+  const [collectionPermission, setCollectionPermission] = React.useState(null);
   const [fileNameFormat, setFileNameFormat] = React.useState("");
   const [metadataFields, setMetadataFields] = React.useState([]);
   const [initialFileName, setInitialFileName] = React.useState("");
@@ -135,14 +152,14 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
     const fileNameInput = document.getElementById('fileName');
     if (fileNameInput) {
       try {
-        const blogConfig = jsyaml.load(fileNameInput.getAttribute("data-blog-config"));
-        setConfig(blogConfig);
-        setFileNameFormat(blogConfig.file_name_format);
+        setCollectionConfig(jsyaml.load(fileNameInput.getAttribute("data-collection-config")));
+        setCollectionPermission(jsyaml.load(fileNameInput.getAttribute("data-user-config")));
+        //setFileNameFormat(collectionConfig.file_name_format);
         setInitialFileName(fileNameInput.value);
 
         // Extract metadata fields from format
-        const fields = blogConfig.file_name_format.match(/{(.*?)}/g)?.map(field => field.slice(1, -1)) || [];
-        setMetadataFields(fields);
+        //const fields = collectionConfig.file_name_format.match(/{(.*?)}/g)?.map(field => field.slice(1, -1)) || [];
+        //setMetadataFields(fields);
       } catch (error) {
         console.error('Error loading blog configuration:', error);
       }
@@ -176,7 +193,7 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
           return (
             <Textarea
               key={field.name}
-              value={frontMatter[field.name] || ''}
+              value={frontMatter[field.name] || collectionPermission.default_metadata[field.name] || ''}
               onChange={(e) => handleInputChange(field.name, e.target.value)}
               placeholder={field.description}
               className="w-full"
@@ -187,7 +204,7 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
           return (
             <EditableTitle
               key={field.name}
-              t={frontMatter[field.name] || ''}
+              value={frontMatter[field.name] || collectionPermission.default_metadata[field.name] || ''}
               onChange={(e) => handleInputChange(field.name, e.target.value)}
             />
           );
@@ -195,7 +212,7 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
         return (
           <Input
             key={field.name}
-            value={frontMatter[field.name] || ''}
+            value={frontMatter[field.name] || collectionPermission.default_metadata[field.name] || ''}
             onChange={(e) => handleInputChange(field.name, e.target.value)}
             placeholder={field.description}
             className="w-full"
@@ -205,7 +222,7 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
         return (
           <DatePickerInput
             key={field.name}
-            value={frontMatter[field.name]}
+            value={frontMatter[field.name] || collectionPermission.default_metadata[field.name]}
             onSelect={(value) => handleInputChange(field.name, value)}
           />
         );
@@ -213,7 +230,8 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
         return (
           <PillInput
             key={field.name}
-            value={frontMatter[field.name] || []}
+            value={frontMatter[field.name] || collectionPermission.default_metadata[field.name]?.value || []}
+            disable={collectionPermission.default_metadata[field.name]?.strict || false}
             onChange={(value) => handleInputChange(field.name, value)}
             placeholder={field.description}
           />
@@ -222,7 +240,7 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
         return (
           <div key={field.name} className="relative">
             <Input
-              value={frontMatter[field.name] || ''}
+              value={frontMatter[field.name] || collectionPermission.default_metadata[field.name] || ''}
               onChange={(e) => handleInputChange(field.name, e.target.value)}
               placeholder={field.description}
               className="py-5 px-2.5 pr-24"
@@ -249,13 +267,13 @@ export default function MetaDataForm({ frontMatter, setFrontMatter }) {
   };
 
   // If configuration hasn't loaded yet, return null or a loading state
-  if (!config) {
+  if (!collectionConfig) {
     return null;
   }
 
   return (
     <form className="max-w-2xl mx-auto space-y-6 p-6 bg-background">
-      {config.metadata_schema.map((field) => (
+      {collectionConfig.metadata_schema.map((field) => (
         <div key={field.name}>
           {renderInputField(field)}
         </div>

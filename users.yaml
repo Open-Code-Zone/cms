@@ -1,0 +1,30 @@
+- email: test-cms-user@oestergaard-as.dk
+  is_admin: true
+  collection_permissions:
+    - name: posts
+      permission: write
+      default_metadata:
+        authors:
+          value:
+            - admin
+          strict: true
+    - name: authors
+      permission: write
+
+- email: author@test.com
+  is_admin: false
+  collection_permissions:
+    - name: posts
+      permission: write
+      default_metadata:
+        authors:
+          value:
+            - waishnav
+          strict: false
+        tags:
+          value:
+            - india
+          strict: true
+
+    - name: authors
+      permission: read

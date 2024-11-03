@@ -6,8 +6,8 @@ import (
 	"github.com/Open-Code-Zone/cms/views/layouts"
 )
 
-templ EditCollection(id string, collectionContent *string, collectionConfig *config.Collection) {
+templ EditCollection(id string, collectionContent *string, collectionConfig *config.Collection, collectionPermission *config.CollectionPermission) {
 	@layouts.DashboardLayout() {
-		@components.Editor(id, collectionContent, collectionConfig)
+		@components.Editor(id, collectionContent, collectionConfig, collectionPermission)
 	}
 }
