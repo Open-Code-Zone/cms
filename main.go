@@ -60,13 +60,12 @@ func main() {
 	router.HandleFunc("/auth/logout/{provider}", handler.Logout).Methods("GET")         // logout
 
 	// routes for every collection
-	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Index)).Methods("GET")           // all the collection items
+	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Index)).Methods("GET")           // all the collection items with filtering through query params
 	router.HandleFunc("/{collection}/new", auth.RequireAuth(handler.New)).Methods("GET")         // new collection item page
 	router.HandleFunc("/{collection}", auth.RequireAuth(handler.Create)).Methods("POST")         // create new collection item htmx endpoint
 	router.HandleFunc("/{collection}/edit/{id}", auth.RequireAuth(handler.Edit)).Methods("GET")  // edit collection item page
 	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Destroy)).Methods("DELETE") // delete collection item htmx endpoint
 	router.HandleFunc("/{collection}/{id}", auth.RequireAuth(handler.Update)).Methods("PUT")     // update collection item htmx endpoint
-	router.HandleFunc("/{collection}/filter", auth.RequireAuth(handler.Filter)).Methods("POST")  // filter collection items htmx endpoint
 
 	log.Printf("Server: Listening on %s:%s\n", config.Envs.PublicHost, config.Envs.Port)
 	log.Fatalln(http.ListenAndServe(fmt.Sprintf(":%s", config.Envs.Port), router))

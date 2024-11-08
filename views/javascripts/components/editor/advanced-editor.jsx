@@ -22,9 +22,8 @@ import { uploadFn } from "./image-upload";
 import { Separator } from "../ui/separator";
 
 const extensions = [...defaultExtensions, slashCommand];
-//const hljs = require('highlight.js');
 
-const Editor = ({ markdownContent, setMarkdownContent }) => {
+const Editor = ({ mode, markdownContent, setMarkdownContent }) => {
   const [openNode, setOpenNode] = useState(false);
   const [openLink, setOpenLink] = useState(false);
   const [saveStatus, setSaveStatus] = useState("Loaded from localstorage");
@@ -55,6 +54,7 @@ const Editor = ({ markdownContent, setMarkdownContent }) => {
           className="relative min-h-[500px] pt-16 p-10 w-full border bg-background sm:mb-[calc(20vh)] sm:rounded-lg sm:border"
           extensions={extensions}
           editorProps={{
+            editable: () => mode == "write",
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
             },

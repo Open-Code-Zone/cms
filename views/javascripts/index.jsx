@@ -40,7 +40,7 @@ const generateFileContent = (frontMatter, markdownContent) => {
 };
 
 // Novel Editor Component
-const NovelEditor = ({ id, initialValue }) => {
+const NovelEditor = ({ id, initialValue, mode }) => {
   const initialContent = parseMarkdownContent(loadContentFromLocalStorage(id));
   const [markdownContent, setMarkdownContent] = React.useState(initialContent.markdownContent);
   const [frontMatter, setFrontMatter] = React.useState(initialContent.frontMatter);
@@ -60,7 +60,7 @@ const NovelEditor = ({ id, initialValue }) => {
   return (
     <>
       <MetaDataForm frontMatter={frontMatter} setFrontMatter={setFrontMatter} />
-      <Editor markdownContent={markdownContent} setMarkdownContent={setMarkdownContent} />
+      <Editor mode={mode} markdownContent={markdownContent} setMarkdownContent={setMarkdownContent} />
     </>
   );
 };
@@ -75,9 +75,9 @@ const initializeComponents = () => {
       const editorRoot = createRoot(editorContainer);
       const initialValue = textarea.value || "";
       const id = textarea.getAttribute("data-id");
-
+      const mode = textarea.getAttribute("data-mode");
       editorRoot.render(
-        <NovelEditor id={id} initialValue={initialValue} />
+        <NovelEditor id={id} initialValue={initialValue} mode={mode} />
       );
     }
   }

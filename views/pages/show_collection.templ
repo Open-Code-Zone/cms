@@ -8,18 +8,20 @@ import (
 	"github.com/Open-Code-Zone/cms/internal/database"
 )
 
-templ ShowCollectionItems(markdownFiles []database.ListAllCollectionItemsRow, collection *config.Collection) {
+templ ShowCollectionItems(markdownFiles []database.ListAllCollectionItemsRow, collection *config.Collection, collectionPermission *config.CollectionPermission) {
 	@layouts.DashboardLayout() {
 		<div class="w-full max-w-5xl mx-auto my-6 flex justify-between items-center">
 			<h1 class="text-xl font-semibold leading-6 text-gray-900">All { strings.Title(collection.Collection) }</h1>
 			<div class="flex gap-4">
 				<div id="filterFormRoot" data-config={ collection.ToYAMLString() }></div>
-				<a
-					href={ templ.SafeURL(collection.Collection + "/new") }
-					class="flex cursor-pointer items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-				>
-					New
-				</a>
+				if collectionPermission.Permission == "write" {
+					<a
+						href={ templ.SafeURL(collection.Collection + "/new") }
+						class="flex cursor-pointer items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+					>
+						New
+					</a>
+				}
 			</div>
 		</div>
 		<table class="w-full text-xl border mx-auto max-w-5xl divide-y divide-gray-200 dark:divide-neutral-700">
@@ -28,7 +30,7 @@ templ ShowCollectionItems(markdownFiles []database.ListAllCollectionItemsRow, co
 					<th scope="col" class="px-6 py-3 text-start font-medium text-gray-500 uppercase dark:text-neutral-400">
 						Title
 					</th>
-					<th scope="col" class="px-6 py-3 text-start font-medium text-gray-500 uppercase dark:text-neutral-400">
+					<th scope="col" class="px-6 py-3 text-right font-medium text-gray-500 uppercase dark:text-neutral-400">
 						Action
 					</th>
 				</tr>
@@ -39,22 +41,32 @@ templ ShowCollectionItems(markdownFiles []database.ListAllCollectionItemsRow, co
 						<td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800 dark:text-neutral-200">
 							{ file.Filename }
 						</td>
-						<td class="flex justify-between px-6 py-4 whitespace-nowrap text-gray-800 dark:text-neutral-200">
-							<a
-								class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
-								href={ templ.SafeURL("/" + collection.Collection + "/edit/" + file.Filename) }
-							>
-								Edit
-							</a>
-							<button
-								hx-target={"#" + collection.Collection + fmt.Sprint(index) }
-								hx-delete={ "/" + collection.Collection + "/" +
-          file.Filename }
-								class="text-red-600"
-							>
-								Delete
-							</button>
-						</td>
+						if collectionPermission.Permission == "write" {
+							<td class="px-6 py-4 whitespace-nowrap flex justify-around text-gray-800 dark:text-neutral-200">
+								<a
+									class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
+									href={ templ.SafeURL("/" + collection.Collection + "/edit/" + file.Filename) }
+								>
+									Edit
+								</a>
+								<button
+									hx-target={"#" + collection.Collection + fmt.Sprint(index) }
+									hx-delete={ "/" + collection.Collection + "/" + file.Filename }
+									class="text-red-600"
+								>
+									Delete
+								</button>
+							</td>
+						} else {
+							<td class="px-6 py-4 whitespace-nowrap text-right text-gray-800 dark:text-neutral-200">
+								<a
+									class="text-blue-600 hover:text-blue-800 dark:text-blue-500 dark:hover:text-blue-400"
+									href={ templ.SafeURL("/" + collection.Collection + "/edit/" + file.Filename) }
+								>
+									View
+								</a>
+							</td>
+					}
 					</tr>
 				}
 			</tbody>

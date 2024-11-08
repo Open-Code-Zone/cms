@@ -9,7 +9,7 @@
             - admin
           strict: true
     - name: authors
-      permission: write
+      permission: read
 
 - email: author@test.com
   is_admin: false

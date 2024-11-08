@@ -1,4 +1,5 @@
 - collection: posts
+  who_can_edit: all
   git_path: content/posts
   file_name_format: "{title}"
   metadata_schema:
@@ -8,7 +9,7 @@
       filter: true
       required: true
     - name: description
-      type: string
+      type: text
       filter: false
       description: "A short description of the post"
       required: true
@@ -33,9 +34,15 @@
       type: array
       items_type: string
       description: "Tags related to the post"
-      required: false
+      required: true
+      allowed_values:
+        - denmark
+        - india
+        - usa
+        - cananda
 
 - collection: authors
+  who_can_edit: admin
   git_path: content/authors
   file_name_format: "{name}"
   metadata_schema:
